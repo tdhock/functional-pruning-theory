@@ -296,7 +296,7 @@ C_{S,n}(u_S)
 \end{frame}
 
 \begin{frame}
-  \frametitle{Algorithm with constraints is also super fast}
+  \frametitle{Algorithm with constraints is also fast}
   H, {\it et al.} arXiv:1703.03352.
 \vskip -0.5cm
   \begin{align*}
@@ -316,8 +316,31 @@ C_{S,n}(u_S)
 \includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
 
 \end{frame}
+
+
+\begin{frame}
+  \frametitle{Another fast constrained algorithm for neuroscience}
+  Jewell, {\it et al.} arXiv:1802.07380.
+\vskip -0.5cm
+\begin{align*}
+    \minimize_{c_1,\dots,c_T, z_2, \dots, z_T} &\ \ 
+    \frac 1 2 \sum_{t=1}^T (y_t-c_t)^2  + 
+\lambda\sum_{t=2}^{T} 1_{(z_t\neq 0)}
+\\
+      \text{subject to} &\ \ z_t = c_t - \gamma c_{t-1} \geq 0.
+  \nonumber 
+\end{align*}
+
+\centering
+
+\includegraphics[width=0.8\textwidth]{screenshot-jewell-intervals}
+
+\includegraphics[width=0.8\textwidth]{screenshot-jewell-timings-labels}
+  
+\end{frame}
+
 \begin{frame}[fragile]
-  \frametitle{Another super fast constrained algorithm }
+  \frametitle{Another fast constrained algorithm for genomics}
 
   H, {\it et al.} in preparation.
 \vskip -0.5cm

@@ -1,0 +1,9 @@
+Why does functional pruning yield such fast algorithms for optimal
+changepoint detection?
+
+Recent empirical results suggest that functional pruning algorithms
+are O(N log N) but we have weak theory to back that up.
+
+** 26 Sept 2018
+
+Prepared [[file:HOCKING-slides.tex]] for math colloquium.

@@ -1,0 +1,12 @@
+*~
+papers
+auto
+data
+.Rhistory
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb

@@ -23,3 +23,10 @@ these very fast empirical results.
 ** 26 Sept 2018
 
 Prepared [[file:HOCKING-slides.tex]] for math colloquium.
+
+** 4 May 2016
+
+- [[https://github.com/tdhock/PeakSegFPOP-paper/blob/master/figure-unconstrained-PDPA-normal.R]] 
+  implements the unconstrained
+  PDPA and creates interactive data viz of the functional cost model and pruning
+  [[http://cbio.ensmp.fr/~thocking/figure-unconstrained-PDPA-normal-big/]]

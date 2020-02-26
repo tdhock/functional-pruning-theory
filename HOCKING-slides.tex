@@ -212,60 +212,18 @@ C_{S,n}(u_S)
 \end{frame}
 
 \begin{frame}
-  \frametitle{Example data set with $n=4$}
-  Rigaill, arXiv:1004.0887.
+  \frametitle{Functional cost representation results in pruning}
+  
+  Maidstone, {\it et al.} Statistics and Computing 2016.
+\centering
+\includegraphics[width=0.7\textwidth]{screenshot-Maidstone-figure-1}
 
-  \includegraphics[width=\textwidth]{screenshot-figure-1}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Functional cost computation at $t=3$}
-  Rigaill, arXiv:1004.0887.
-
-  \begin{itemize}
-  \item Data: 0, 0.5, 0.4, -0.5. 
-  \item $\mathcal L_{1,1}=\min_\mu (\mu-0)^2=0$.
-  \item $\mathcal L_{1,2}=\min_\mu (\mu-0)^2 + (\mu-0.5)^2=0.125$.
-  \item Computing
-    $C_{2,3}(\mu) = \ell(\mu, z_3) + \min\{C_{2,2}(\mu),\, \mathcal
-    L_{1,2}\}$:
-  \item Change before $\tau=2$: $C_{2,2}(\mu)=\mathcal L_{1,1} + (\mu-0.5)^2$.
-  \item Change before $\tau=3$: $\mathcal L_{1,2}$.
-  \end{itemize}
-
-  \includegraphics[width=\textwidth]{screenshot-figure-2}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Functional cost computation at $t=4$}
-  Rigaill, arXiv:1004.0887.
-
-  \begin{itemize}
-  \item Data: 0, 0.5, 0.4, -0.5. 
-  \item Computing $C_{2,4}(\mu) = \ell(\mu, z_4) + \min\{C_{2,3}(\mu),\, \mathcal
-    L_{1,3}\}$:
-  \item Change before $\tau=2$: $\mathcal L_{1,1} + (\mu-0.5)^2+(\mu-0.4)^2$.
-  \item Change before $\tau=3$: $\mathcal L_{1,2}+(\mu-0.4)^2$.
-  \item Change before $\tau=4$: $\mathcal L_{1,3}=\min_\mu (\mu-0)^2+(\mu-0.5)^2+(\mu-0.4)^2$.
-  \end{itemize}
-
-  \includegraphics[width=\textwidth]{screenshot-figure-3}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Functional pruning larger example}
-
-  \begin{itemize}
-  \item Computing each $C_{s,t}(\mu)$ is an $O(I)$ operation where $I$
-    is the number of intervals (candidate changepoints).
-  \item Need to compute $O(Sn)$ functions; total complexity is $O(SnI)$.
-  \item Empirically $I=O(\log n)$ due to pruning so overall $O(Sn\log n)$.
-  \end{itemize}
-
-\includegraphics[width=\textwidth]{screenshot-PDPA-demo}
-%    \input{figure-2-min-envelope}
-
-\url{http://members.cbio.mines-paristech.fr/~thocking/figure-unconstrained-PDPA-normal-big/}
+\begin{itemize}
+\item Only need to store the minimum cost (colored lines/intervals).
+  \item No need to consider the cost functions/changepoints which are
+    not optimal for any mean values (grey lines).
+\end{itemize}
+  
 \end{frame}
 
 \section{Empirical time complexity}
@@ -320,7 +278,7 @@ C_{S,n}(u_S)
 
 \begin{frame}
   \frametitle{Another fast constrained algorithm for neuroscience}
-  Jewell, {\it et al.} arXiv:1802.07380.
+  Jewell, {\it et al.} {\it Biostatistics} 2019.
 \vskip -0.5cm
 \begin{align*}
     \minimize_{c_1,\dots,c_T, z_2, \dots, z_T} &\ \ 
@@ -342,7 +300,8 @@ C_{S,n}(u_S)
 \begin{frame}[fragile]
   \frametitle{Another fast constrained algorithm for genomics}
 
-  H, {\it et al.} in preparation.
+  H, {\it et al.} arXiv:1810.00117, accepted in \emph{J.
+    Statistical Software}.
 \vskip -0.5cm
 \begin{align*}
     \minimize_{\substack{
@@ -365,6 +324,15 @@ C_{S,n}(u_S)
     Overall  $O(n \log n)$ complexity.
   \end{minipage}
   
+\end{frame}
+
+\begin{frame}
+\frametitle{Worst case quadratic complexity only observed with synthetic
+  data and large penalties}
+
+\includegraphics[width=\textwidth]{figure-worst-case}
+
+Mean $\pm$ standard deviation over 10 data sets.
 
 \end{frame}
 
@@ -398,10 +366,68 @@ C_{S,n}(u_S)
   \item Only one proof of average time complexity for 1 changepoint
     and the uniform loss function (never used in practice).
   \item Would be interesting to prove $O(n\log n)$ average time complexity in
-    other situations. (square/Poisson loss, $\lambda$) How?
-  \item Contact me if you have any other ideas: toby.hocking@nau.edu
+    other more realistic situations. (square/Poisson loss, $\lambda$) How?
+  \item Let's collaborate! toby.hocking@nau.edu
   \end{itemize}
   
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Example data set with $n=4$}
+  Rigaill, arXiv:1004.0887.
+
+  \includegraphics[width=\textwidth]{screenshot-figure-1}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional cost computation at $t=3$}
+  Rigaill, arXiv:1004.0887.
+
+  \begin{itemize}
+  \item Data: 0, 0.5, 0.4, -0.5. 
+  \item $\mathcal L_{1,1}=\min_\mu (\mu-0)^2=0$.
+  \item $\mathcal L_{1,2}=\min_\mu (\mu-0)^2 + (\mu-0.5)^2=0.125$.
+  \item Computing
+    $C_{2,3}(\mu) = \ell(\mu, z_3) + \min\{C_{2,2}(\mu),\, \mathcal
+    L_{1,2}\}$:
+  \item Change before $\tau=2$: $C_{2,2}(\mu)=\mathcal L_{1,1} + (\mu-0.5)^2$.
+  \item Change before $\tau=3$: $\mathcal L_{1,2}$.
+  \end{itemize}
+
+  \includegraphics[width=\textwidth]{screenshot-figure-2}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional cost computation at $t=4$}
+  Rigaill, arXiv:1004.0887.
+
+  \begin{itemize}
+  \item Data: 0, 0.5, 0.4, -0.5. 
+  \item Computing $C_{2,4}(\mu) = \ell(\mu, z_4) + \min\{C_{2,3}(\mu),\, \mathcal
+    L_{1,3}\}$:
+  \item Change before $\tau=2$: $\mathcal L_{1,1} + (\mu-0.5)^2+(\mu-0.4)^2$.
+  \item Change before $\tau=3$: $\mathcal L_{1,2}+(\mu-0.4)^2$.
+  \item Change before $\tau=4$: $\mathcal L_{1,3}=\min_\mu (\mu-0)^2+(\mu-0.5)^2+(\mu-0.4)^2$.
+  \end{itemize}
+
+  \includegraphics[width=\textwidth]{screenshot-figure-3}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional pruning larger example}
+
+  \begin{itemize}
+  \item Computing each $C_{s,t}(\mu)$ is an $O(I)$ operation where $I$
+    is the number of intervals (candidate changepoints).
+  \item Need to compute $O(Sn)$ functions; total complexity is $O(SnI)$.
+  \item Empirically $I=O(\log n)$ due to pruning so overall $O(Sn\log n)$.
+  \end{itemize}
+
+\includegraphics[width=\textwidth]{screenshot-PDPA-demo}
+%    \input{figure-2-min-envelope}
+
+\url{http://members.cbio.mines-paristech.fr/~thocking/figure-unconstrained-PDPA-normal-big/}
 \end{frame}
 
 

@@ -1,7 +1,11 @@
 Title: Why does functional pruning yield such fast algorithms for
 optimal changepoint detection?
 
-Abstract: Detecting abrupt changes is an important problem in N data
+Abstract: In this talk I will present a review of recently proposed
+algorithms for optimal changepoint detection, which are empirically
+very fast, but we don't have any good theoretical justification as to
+why this is the case in realistic data settings. 
+Detecting abrupt changes is an important problem in N data
 gathered over time or space. In this setting, maximum likelihood
 inference amounts to minimizing a loss function (which encourages data
 fitting) plus a penalty on the number of changes in the model
@@ -19,6 +23,11 @@ average (for a special loss function). For future work it would be
 interesting to further study the average complexity of these
 algorithms, in order to provide more theoretical justification for
 these very fast empirical results.
+
+** 26 Feb 2020
+
+[[file:figure-worst-case.R]] makes [[file:figure-worst-case.pdf]] showing
+synthetic increasing data achieves worst case quadratic complexity.
 
 ** 26 Sept 2018
 

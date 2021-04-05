@@ -78,7 +78,8 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Maximum likelihood inference is a non-convex minimization problem}
+  \frametitle{Maximum likelihood inference for $S$ segments and $n$
+    data is a non-convex minimization problem}
     
 \only<1>{\input{figure-PeakSeg}}      
 \only<2>{\input{figure-PeakSeg-unconstrained}}
@@ -187,31 +188,6 @@ C_{S,n}(u_S)
 \end{frame}
 
 \begin{frame}
-  \frametitle{Dynamic programming recursion with functional pruning}
-  \begin{itemize}
-  \item $\tau$ is first data point on last segment.
-  \item $\mu$ is last segment mean.
-  \end{itemize}
-  \begin{eqnarray*}
-    C_{S,n}(\mu) &=&
-    \min_{\tau\in\{S, \dots, n\} }
-\mathcal L_{S-1, \tau-1}
- +
-\sum_{i=\tau}^{n} \ell( \mu,  z_i)\\
-&=&\min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n} \ell( \mu,  z_i), \dots,\\
-    &&\hskip 0.8cm \mathcal L_{S-1,n-1} + \ell( \mu,  z_n) \}\\
-&=&\ell( \mu,  z_n) + \min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n-1} \ell( \mu,  z_i), \dots,\\
-    &&\hskip 2.7cm \mathcal L_{S-1,n-2}  +\ell( \mu,  z_{n-1})\}\\
-    &&\hskip 2.7cm \mathcal L_{S-1,n-1}  \}\\
-&=&\ell( \mu,  z_n)+
-\min\{
-    C_{S,n-1}(\mu),\,  
-    \mathcal L_{S-1,n-1}
-\}
-  \end{eqnarray*}
-\end{frame}
-
-\begin{frame}
   \frametitle{Functional cost representation results in pruning}
   
   Maidstone, {\it et al.} Statistics and Computing 2016.
@@ -255,13 +231,11 @@ C_{S,n}(u_S)
 
 \begin{frame}
   \frametitle{Algorithm with constraints is also fast}
-  H, {\it et al.} arXiv:1703.03352.
+  H, {\it et al.} Journal of Machine Learning Research 21(87):1--40, 2020. 
 \vskip -0.5cm
   \begin{align*}
     \minimize_{\substack{
   \mathbf m\in\RR^{n}
-% \\
-%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
   }} &\ \ 
     \sum_{i=1}^n \ell( m_i,  z_i) 
 \\
@@ -370,6 +344,31 @@ Mean $\pm$ standard deviation over 10 data sets.
   \item Let's collaborate! toby.hocking@nau.edu
   \end{itemize}
   
+\end{frame}
+
+\begin{frame}
+  \frametitle{Dynamic programming recursion with functional pruning}
+  \begin{itemize}
+  \item $\tau$ is first data point on last segment.
+  \item $\mu$ is last segment mean.
+  \end{itemize}
+  \begin{eqnarray*}
+    C_{S,n}(\mu) &=&
+    \min_{\tau\in\{S, \dots, n\} }
+\mathcal L_{S-1, \tau-1}
+ +
+\sum_{i=\tau}^{n} \ell( \mu,  z_i)\\
+&=&\min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n} \ell( \mu,  z_i), \dots,\\
+    &&\hskip 0.8cm \mathcal L_{S-1,n-1} + \ell( \mu,  z_n) \}\\
+&=&\ell( \mu,  z_n) + \min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n-1} \ell( \mu,  z_i), \dots,\\
+    &&\hskip 2.7cm \mathcal L_{S-1,n-2}  +\ell( \mu,  z_{n-1})\}\\
+    &&\hskip 2.7cm \mathcal L_{S-1,n-1}  \}\\
+&=&\ell( \mu,  z_n)+
+\min\{
+    C_{S,n-1}(\mu),\,  
+    \mathcal L_{S-1,n-1}
+\}
+  \end{eqnarray*}
 \end{frame}
 
 

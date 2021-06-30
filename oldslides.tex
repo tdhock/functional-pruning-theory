@@ -1,0 +1,454 @@
+% -*- compile-command: "make jss-slides.pdf" -*-
+\documentclass{beamer}
+\usepackage{tikz}
+\usepackage[all]{xy}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{algorithmic}
+\usepackage{multirow}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Lik}{Lik}
+\DeclareMathOperator*{\PoissonLoss}{PoissonLoss}
+\DeclareMathOperator*{\Peaks}{Peaks}
+\DeclareMathOperator*{\Segments}{Segments}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator*{\minimize}{minimize}
+\newcommand{\sign}{\operatorname{sign}}
+\newcommand{\RR}{\mathbb R}
+\newcommand{\ZZ}{\mathbb Z}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\z}{$z = 2, 4, 3, 5, 1$} 
+
+\newcommand{\algo}[1]{\textcolor{#1}{#1}}
+\definecolor{PDPA}{HTML}{66C2A5}
+\definecolor{CDPA}{HTML}{FC8D62}
+\definecolor{GPDPA}{HTML}{4D4D4D}
+
+% Set transparency of non-highlighted sections in the table of
+% contents slide.
+\setbeamertemplate{section in toc shaded}[default][100]
+\AtBeginSection[]
+{
+  \setbeamercolor{section in toc}{fg=red} 
+  \setbeamercolor{section in toc shaded}{fg=black} 
+  \begin{frame}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\title{Why does functional pruning yield such fast algorithms for
+  optimal changepoint detection?}
+
+\author{
+  Toby Dylan Hocking\\
+  toby.hocking@nau.edu
+}
+
+%\date{13 Nov 2017}
+
+\maketitle
+
+\section{Classical dynamic programming for optimal changepoint detection}
+
+\begin{frame}
+  \frametitle{Statistical model is a piecewise constant mean}
+
+  \input{figure-PeakSeg}
+  \vskip -0.8cm    
+  \begin{itemize}
+  \item We have $n$ data $z_1, \dots, z_n\in\ZZ_+$.
+  \item Fix the number of segments $S\in\{1, 2, \dots, n\}$.
+  \item Optimization variables: $S-1$ changepoints
+    $t_1 < \cdots < t_{S-1}$ and $S$ segment means $u_1,\dots,u_S\in\RR_+$.
+  \item Let $0=t_0<t_1 < \cdots < t_{S-1}<t_S=n$ be the segment
+    limits.
+  \item Statistical model: for every segment $s\in\{1,\dots,S\}$,
+    $z_i \stackrel{\text{iid}}{\sim} \text{Poisson}(u_s)$ for every
+    data point $i\in(t_{s-1},t_s]$ implies convex loss function
+    $\ell(u, z)=u-z\log u$ to minimize.
+  \item Other models: real-valued
+    $z_i\stackrel{\text{iid}}{\sim} N(u_s, \sigma^2)$ implies square
+    loss $\ell(u, z)=(u-z)^2$, etc.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Maximum likelihood inference is a non-convex minimization problem}
+    
+\only<1>{\input{figure-PeakSeg}}      
+\only<2>{\input{figure-PeakSeg-unconstrained}}
+%\only<3>{\input{figure-PeakSeg-constrained}}
+\vskip -1.4cm
+\begin{eqnarray*}
+  \mathcal L_{S,n} &=& \min_{\substack{
+  \mathbf u\in\RR^{S}
+\\
+   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+  }} 
+    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+\\
+&=&\min_{t_{S-1}}\underbrace{
+\min_{\substack{
+u_1,\dots,u_{S-1}\\
+t_1<\cdots<t_{S-2}
+}}
+  \sum_{s=1}^{S-1}\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i)
+}_{
+\mathcal L_{S-1, t_{S-1}}
+} +
+\underbrace{\min_{u_S} \sum_{i=t_{S-1}+1}^{t_S=n} \ell( u_S,  z_i)}_{
+c_{(t_{S-1}, t_S=n]}
+}
+%      \text{subject to \hskip 0.75cm} &\ \ \alert<3>{u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\},}  \nonumber\\
+%  &\ \ \alert<3>{u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\}.}  \nonumber 
+\end{eqnarray*}
+\vskip -0.4cm
+\begin{itemize}  
+\item Hard optimization problem, naively $O(n^S)$ time.
+%\item \alert<2>{Previous unconstrained model: not always up-down changes.}
+%\item \alert<3>{Interpretable: $P=(S-1)/2$ peaks (segments 2, 4, ...).}
+\item Auger and Lawrence (1989): $O(Sn^2)$ time classical dynamic
+  programming algorithm:
+$$
+\mathcal L_{s,t}=\min_{t'<t} \mathcal L_{s-1,t'} + c_{(t', t]}
+$$
+\end{itemize}
+\end{frame} 
+
+\begin{frame}
+  \frametitle{Efficient computation of optimal last segment cost}
+For any $0\leq i < j \leq n$ we have    
+\begin{eqnarray*}
+  c_{(i, j]}
+%  &=&  \min_u \sum_{t=i+1}^{j} \ell( u,  z_t)\\
+  &=&  \min_u \sum_{t=i+1}^{j} ( u - z_t)^2\\
+  &=&  \min_u \sum_{t=i+1}^{j} ( u^2 -2 u z_t + z_t^2)\\
+  &=&  \sum_{t=i+1}^{j}(z_t^2) + \min_u (j-i) u^2 -2 u \sum_{t=i+1}^{j} (z_t)   \\
+%  &=&  Q_j - Q_i + (j-i) [(S_j-S_i)/(j-i)]^2 -2 [(S_j-S_i)/(j-i)] (S_j-S_i) \\
+  &=&  Q_j - Q_i + (S_j-S_i)^2/(j-i) -2 (S_j-S_i)^2/(j-i) \\
+  &=&  Q_j - Q_i - (S_j-S_i)^2/(j-i) 
+\end{eqnarray*}
+where
+\begin{itemize}  
+\item $Q_0=0$ and $Q_i=Q_{i-1} + z_i^2$ for all $i\in\{1, \dots, n\}$ (cumulative sum of squares of data).
+\item $S_0=0$ and $S_i=S_{i-1} + z_i$ for all $i\in\{1, \dots, n\}$ (cumulative sum of data).
+\end{itemize}
+\end{frame} 
+
+\input{figure-dp-first}
+
+\input{figure-dp-short}
+
+\input{figure-dp}
+
+\begin{frame}
+  \frametitle{Dynamic programming is faster than grid search for $s>
+    2$ segments}
+
+  Computation time in number of data points $n$:
+
+  \vskip 1cm
+
+  \begin{tabular}{ccc}
+    segments $s$ & grid search & dynamic programming \\
+    \hline
+    1 & $O(n)$ & $O(n)$ \\
+    2 & $O(n^2)$ & $O(n^2)$ \\
+    3 & $O(n^3)$ & $O(n^2)$ \\
+    4 & $O(n^4)$ & $O(n^2)$ \\
+    $\vdots$ &     $\vdots$ &     $\vdots$ 
+  \end{tabular}
+
+  \vskip 1cm
+
+  For example $n = 5735$ data points to segment.\\
+  $n^2 = 32890225$\\
+  $n^3 = 188625440375$\\
+  $\vdots$
+\end{frame}
+
+\input{figure-dp-third}
+
+\section{Functional pruning algorithms}
+
+\begin{frame}
+  \frametitle{Classical dynamic programming is too slow for big data}
+  \begin{itemize}
+  \item Motivated by big data sequences $n>1000$ in genomics and other
+    fields, for which $O(n^2)$ is too slow.
+  \item Recent work into functional pruning algorithms which compute
+    the same solution in $O(n\log n)$ (empirically).
+  \item Independent discovery by Rigaill arXiv:1004.0887, JFdS 2015;
+    Johnson PhD 2011, JCGS 2013. Main idea: first minimize on the last
+    changepoint $t_{S-1}$, then on the last segment mean $u_S$:
+  \end{itemize}
+\begin{eqnarray*}
+  \mathcal L_{S,n} &=& \min_{t_{S-1}}
+\mathcal L_{S-1, t_{S-1}}
+ +
+\underbrace{\alert{\min_{u_S}} \sum_{i=t_{S-1}+1}^{t_S=n} \ell( u_S,  z_i)}_{
+c_{(t_{S-1}, t_S=n]}
+}\text{ --- classical}\\
+&=& \alert{\min_{u_S} }
+\underbrace{
+\min_{t_{S-1}}
+\mathcal L_{S-1, t_{S-1}}
+ +
+\sum_{i=t_{S-1}+1}^{t_S=n} \ell( u_S,  z_i)
+}_{
+C_{S,n}(u_S)
+}\text{ --- functional}
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Dynamic programming recursion with functional pruning}
+  \begin{itemize}
+  \item $\tau$ is first data point on last segment.
+  \item $\mu$ is last segment mean.
+  \end{itemize}
+  \begin{eqnarray*}
+    C_{S,n}(\mu) &=&
+    \min_{\tau\in\{S, \dots, n\} }
+\mathcal L_{S-1, \tau-1}
+ +
+\sum_{i=\tau}^{n} \ell( \mu,  z_i)\\
+&=&\min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n} \ell( \mu,  z_i), \dots,\\
+    &&\hskip 0.8cm \mathcal L_{S-1,n-1} + \ell( \mu,  z_n) \}\\
+&=&\ell( \mu,  z_n) + \min\{\mathcal L_{S-1,S-1} + \sum_{i=S}^{n-1} \ell( \mu,  z_i), \dots,\\
+    &&\hskip 2.7cm \mathcal L_{S-1,n-2}  +\ell( \mu,  z_{n-1})\}\\
+    &&\hskip 2.7cm \mathcal L_{S-1,n-1}  \}\\
+&=&\ell( \mu,  z_n)+
+\min\{
+    C_{S,n-1}(\mu),\,  
+    \mathcal L_{S-1,n-1}
+\}
+  \end{eqnarray*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional cost representation results in pruning}
+  
+  Maidstone, {\it et al.} Statistics and Computing 2016.
+\centering
+\includegraphics[width=0.7\textwidth]{screenshot-Maidstone-figure-1}
+
+\begin{itemize}
+\item Only need to store the minimum cost (colored lines/intervals).
+  \item No need to consider the cost functions/changepoints which are
+    not optimal for any mean values (grey lines).
+\end{itemize}
+  
+\end{frame}
+
+\section{Empirical time complexity}
+
+\begin{frame}
+  \frametitle{Number of intervals in real and simulated data}
+  Rigaill, arXiv:1004.0887.
+
+  \includegraphics[width=\textwidth]{screenshot-figure-5}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Another fast functional pruning algorithm}
+  Maidstone, {\it et al.} Statistics and Computing 2016.
+\vskip -0.5cm
+\begin{align*}
+    \minimize_{\substack{
+  \mathbf m\in\RR^{n}
+  }} &\ \ 
+    \sum_{i=1}^n \ell( m_i,  z_i)  + \lambda{\sum_{i=1}^{n-1}I[m_{i}\neq m_{i+1}]}
+  \nonumber 
+\end{align*}
+
+\centering
+  \includegraphics[width=0.48\textwidth]{screenshot-Maidstone-figure-4}
+\includegraphics[width=0.48\textwidth]{figure-systemtime-arrays-bins}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algorithm with constraints is also fast}
+  H, {\it et al.} arXiv:1703.03352.
+\vskip -0.5cm
+  \begin{align*}
+    \minimize_{\substack{
+  \mathbf m\in\RR^{n}
+% \\
+%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+  }} &\ \ 
+    \sum_{i=1}^n \ell( m_i,  z_i) 
+\\
+      \text{subject to} &\ \ {{\sum_{i=1}^{n-1} I[m_i\neq m_{i+1}]}=S-1,}
+  \nonumber\\
+  &\ \ \text{...up-down constraints on $m$.}
+  \nonumber 
+\end{align*}
+
+\includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Another fast constrained algorithm for neuroscience}
+  Jewell, {\it et al.} {\it Biostatistics} 2019.
+\vskip -0.5cm
+\begin{align*}
+    \minimize_{c_1,\dots,c_T, z_2, \dots, z_T} &\ \ 
+    \frac 1 2 \sum_{t=1}^T (y_t-c_t)^2  + 
+\lambda\sum_{t=2}^{T} 1_{(z_t\neq 0)}
+\\
+      \text{subject to} &\ \ z_t = c_t - \gamma c_{t-1} \geq 0.
+  \nonumber 
+\end{align*}
+
+\centering
+
+\includegraphics[width=0.8\textwidth]{screenshot-jewell-intervals}
+
+\includegraphics[width=0.8\textwidth]{screenshot-jewell-timings-labels}
+  
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Another fast constrained algorithm for genomics}
+
+  H, {\it et al.} arXiv:1810.00117, accepted in \emph{J.
+    Statistical Software}.
+\vskip -0.5cm
+\begin{align*}
+    \minimize_{\substack{
+  \mathbf m\in\RR^{n}
+% \\
+%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+  }} &\ \ 
+    \sum_{i=1}^n \ell( m_i,  z_i)  + \lambda{\sum_{i=1}^{n-1}I[m_{i}\neq m_{i+1}]}
+\\
+      \text{subject to} &\ \ \text{...up-down constraints on $m$.}
+  \nonumber 
+\end{align*}
+
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{jss-figure-target-intervals-models}
+    $I=O(\log n)$ intervals.
+  \end{minipage}
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{jss-figure-target-intervals-models-computation}
+    Overall  $O(n \log n)$ complexity.
+  \end{minipage}
+  
+\end{frame}
+
+\begin{frame}
+\frametitle{Worst case quadratic complexity only observed with synthetic
+  data and large penalties}
+
+\includegraphics[width=\textwidth]{figure-worst-case}
+
+Mean $\pm$ standard deviation over 10 data sets.
+
+\end{frame}
+
+\section{Theoretical time complexity}
+
+\begin{frame}
+  \frametitle{Worst case complexity is quadratic}
+  Rigaill, arXiv:1004.0887.
+  
+  \includegraphics[width=\textwidth]{screenshot-proposition-5}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Average case complexity proof for uniform loss}
+  Rigaill, arXiv:1004.0887.
+  
+  \includegraphics[width=\textwidth]{screenshot-proposition-6}
+\end{frame} 
+
+\begin{frame}[fragile]
+  \frametitle{Conclusions}
+
+  \begin{itemize}
+  \item Optimal detection of $S-1$ changepoints in $n$ data is naively
+    a $O(n^S)$ computation.  
+  \item Functional pruning method yields algorithms with worst case
+    time complexity of $O(n^2)$ (same as classical dynamic
+    programming).
+  \item Empirically the functional pruning algorithms are much faster,
+    $O(n\log n)$.
+  \item Only one proof of average time complexity for 1 changepoint
+    and the uniform loss function (never used in practice).
+  \item Would be interesting to prove $O(n\log n)$ average time complexity in
+    other more realistic situations. (square/Poisson loss, $\lambda$) How?
+  \item Let's collaborate! toby.hocking@nau.edu
+  \end{itemize}
+  
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Example data set with $n=4$}
+  Rigaill, arXiv:1004.0887.
+
+  \includegraphics[width=\textwidth]{screenshot-figure-1}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional cost computation at $t=3$}
+  Rigaill, arXiv:1004.0887.
+
+  \begin{itemize}
+  \item Data: 0, 0.5, 0.4, -0.5. 
+  \item $\mathcal L_{1,1}=\min_\mu (\mu-0)^2=0$.
+  \item $\mathcal L_{1,2}=\min_\mu (\mu-0)^2 + (\mu-0.5)^2=0.125$.
+  \item Computing
+    $C_{2,3}(\mu) = \ell(\mu, z_3) + \min\{C_{2,2}(\mu),\, \mathcal
+    L_{1,2}\}$:
+  \item Change before $\tau=2$: $C_{2,2}(\mu)=\mathcal L_{1,1} + (\mu-0.5)^2$.
+  \item Change before $\tau=3$: $\mathcal L_{1,2}$.
+  \end{itemize}
+
+  \includegraphics[width=\textwidth]{screenshot-figure-2}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional cost computation at $t=4$}
+  Rigaill, arXiv:1004.0887.
+
+  \begin{itemize}
+  \item Data: 0, 0.5, 0.4, -0.5. 
+  \item Computing $C_{2,4}(\mu) = \ell(\mu, z_4) + \min\{C_{2,3}(\mu),\, \mathcal
+    L_{1,3}\}$:
+  \item Change before $\tau=2$: $\mathcal L_{1,1} + (\mu-0.5)^2+(\mu-0.4)^2$.
+  \item Change before $\tau=3$: $\mathcal L_{1,2}+(\mu-0.4)^2$.
+  \item Change before $\tau=4$: $\mathcal L_{1,3}=\min_\mu (\mu-0)^2+(\mu-0.5)^2+(\mu-0.4)^2$.
+  \end{itemize}
+
+  \includegraphics[width=\textwidth]{screenshot-figure-3}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Functional pruning larger example}
+
+  \begin{itemize}
+  \item Computing each $C_{s,t}(\mu)$ is an $O(I)$ operation where $I$
+    is the number of intervals (candidate changepoints).
+  \item Need to compute $O(Sn)$ functions; total complexity is $O(SnI)$.
+  \item Empirically $I=O(\log n)$ due to pruning so overall $O(Sn\log n)$.
+  \end{itemize}
+
+\includegraphics[width=\textwidth]{screenshot-PDPA-demo}
+%    \input{figure-2-min-envelope}
+
+\url{http://members.cbio.mines-paristech.fr/~thocking/figure-unconstrained-PDPA-normal-big/}
+\end{frame}
+
+
+\end{document}

@@ -1,5 +1,7 @@
 % -*- compile-command: "make jss-slides.pdf" -*-
 \documentclass{beamer}
+\usepackage[utf8]{inputenc} % usually not needed (loaded by default)
+\usepackage[T1]{fontenc}    % for accent marks.
 \usepackage{tabularx}
 \usepackage{tikz}
 \usepackage[all]{xy}
@@ -414,7 +416,11 @@ In practice $S$ is often unknown --- what value should we use?
   % \item \textbf{Hocking TD} and Killick R. Introduction to optimal
   %   changepoint detection algorithms. useR2017 conference tutorial.
   \item Barnwal A, Cho H, \textbf{Hocking TD}. Survival regression with
-    accelerated failure time model in XGBoost. Pre-print arXiv:2006.04920.
+    accelerated failure time model in XGBoost. Pre-print
+    arXiv:2006.04920.
+  \item Hillman J, \textbf{Hocking TD}. Optimizing ROC Curves with a
+    Sort-Based Surrogate Loss Function for Binary Classification and
+    Changepoint Detection. Preprint arXiv:2107.01285.
   \end{itemize}
 \end{frame}
 

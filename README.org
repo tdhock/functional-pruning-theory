@@ -1,5 +1,5 @@
 Title: Why does functional pruning yield such fast algorithms for
-optimal changepoint detection?
+optimal changepoint detection? [[file:HOCKING-slides.pdf][Slides PDF]]
 
 Abstract: In this talk I will present a review of recently proposed
 algorithms for optimal changepoint detection, which are empirically
@@ -23,6 +23,10 @@ average (for a special loss function). For future work it would be
 interesting to further study the average complexity of these
 algorithms, in order to provide more theoretical justification for
 these very fast empirical results.
+
+** 1 July 2021
+
+[[file:HOCKING-recent-advances.pdf][Recent advances in supervised optimal changepoint detection slides PDF]].
 
 ** 26 Feb 2020
 

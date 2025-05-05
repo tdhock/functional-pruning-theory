@@ -30,6 +30,7 @@ these very fast empirical results.
 - GeomFPOP https://computo.sfds.asso.fr/published-202406-pishchagina-change-point/
 - DuST https://onlinelibrary.wiley.com/doi/full/10.1002/sta4.70012
 - robseg https://www.tandfonline.com/doi/full/10.1080/01621459.2017.1385466
+- CV https://arxiv.org/pdf/2112.03220
 
 ** 1 July 2021
 

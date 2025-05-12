@@ -31,6 +31,10 @@ these very fast empirical results.
 - DuST https://onlinelibrary.wiley.com/doi/full/10.1002/sta4.70012
 - robseg https://www.tandfonline.com/doi/full/10.1080/01621459.2017.1385466
 - CV https://arxiv.org/pdf/2112.03220
+- HOP https://proceedings.mlr.press/v258/kostic25a.html
+- AR1 exact algo https://www.tandfonline.com/doi/full/10.1080/01621459.2021.1909598
+- FOCUS online https://www.jmlr.org/papers/v24/21-1230.html
+- online multivariate complexity proof https://arxiv.org/abs/2311.01174
 
 ** 1 July 2021
 

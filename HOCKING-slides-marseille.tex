@@ -57,11 +57,88 @@
 
 \maketitle
 
-\section{Brief history of optimal change-point algorithms}
+\section{1. Introduction, applications, recent algorithms} 
+\begin{frame}
+  \frametitle{Changepoint detection algorithms for data over time}
+  Neuron spikes, Jewell \emph{et al.}, Biostatistics 2019.
+
+  \includegraphics[width=0.7\textwidth]{intro-neuroscience} 
+
+  Electrocardiograms (heart monitoring), 
+  Fotoohinasab \emph{et al.}, 
+  Asilomar conference 2020.
+
+  \includegraphics[width=0.5\textwidth]{intro-ecg} 
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Changepoint detection algorithms for data over space}
+
+  DNA copy number data for cancer diagnosis, Hocking \emph{et
+    al.}, Bioinformatics 2014.
+
+  \includegraphics[width=0.8\textwidth]{intro-breakpoints}
+
+  ChIP-seq data for annotating active/inactive regions in different cell types, Hocking 
+  \emph{et al.}, Bioinformatics 2017.
+
+  \includegraphics[width=0.8\textwidth]{intro-peaks}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optimal changepoint detection problem}
+  \input{figure-PeakSeg}
+  \vskip -1cm    
+$$
+\min_{\substack{
+  \mathbf u\in\RR^{S}
+\\
+   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+  }} 
+    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+$$
+  \begin{itemize}
+  \item Algorithm inputs $n$ data $z_1, \dots, z_n$ and \# of segments $S$.
+  \item Goal is to compute best $S-1$ changepoints
+    $t_1 < \cdots < t_{S-1}$ and $S$ segment parameters $u_1,\dots,u_S$.
+  \item Non-convex optimization problem, na\" ively $O(n^S)$ time.
+  % \item Auger and Lawrence 1989: $O(Sn^2)$ time algorithm.
+  % \item Rigaill 2015: $O(n \log n)$ time, change in any direction.
+  % \item Hocking \emph{et al.}, 2020: $O(n \log n)$, directional constraints.
+  \item Binary segmentation is heuristic (not guaranteed to compute optimal $u,t$).
+  \item Dynamic programming algorithms can compute optimal $u,t$.
+  \end{itemize}
+\end{frame}
+
+
+%\section{2. History of optimal change-point algorithms}
 
 \begin{frame}
   \frametitle{Simulated data with constant and linear changes}
   \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
+\end{frame}
+
+\begin{frame}
+  \frametitle{PELT pruning}
+  \includegraphics[width=\textwidth]{pelt-prune-1.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
+\end{frame}
+
+\begin{frame}
+  \frametitle{FPOP pruning}
+  \includegraphics[width=\textwidth]{fpop-prune-1.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
+\end{frame}
+ 
+\begin{frame}
+  \frametitle{DUST pruning}
+  \includegraphics[width=\textwidth]{dust-prune-1.png}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
@@ -138,85 +215,7 @@
   
 \end{frame}
 
-\section{New algorithms with constraints between adjacent segments}
-\begin{frame}
-  \frametitle{Changepoint detection algorithms for data over time}
-  Neuron spikes, Jewell \emph{et al.}, Biostatistics 2019.
-
-  \includegraphics[width=0.7\textwidth]{intro-neuroscience} 
-
-  Electrocardiograms (heart monitoring), 
-  Fotoohinasab \emph{et al.}, 
-  Asilomar conference 2020.
-
-  \includegraphics[width=0.5\textwidth]{intro-ecg} 
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Changepoint detection algorithms for data over space}
-
-  DNA copy number data for cancer diagnosis, Hocking \emph{et
-    al.}, Bioinformatics 2014.
-
-  \includegraphics[width=0.8\textwidth]{intro-breakpoints}
-
-  ChIP-seq data for understanding the human genome, Hocking 
-  \emph{et al.}, Bioinformatics 2017.
-
-  \includegraphics[width=0.8\textwidth]{intro-peaks}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Optimal changepoint detection problem and algorithms}
-  \input{figure-PeakSeg}
-  \vskip -1cm    
-$$
-\min_{\substack{
-  \mathbf u\in\RR^{S}
-\\
-   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
-  }} 
-    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
-$$
-  \begin{itemize}
-  \item Algorithm inputs $n$ data $z_1, \dots, z_n$ and \# of segments $S$.
-  \item Goal is to compute best $S-1$ changepoints
-    $t_1 < \cdots < t_{S-1}$ and $S$ segment parameters $u_1,\dots,u_S$.
-  \item Hard non-convex optimization problem, na\" ively $O(n^S)$ time.
-  \item Auger and Lawrence 1989: $O(Sn^2)$ time algorithm.
-  \item Rigaill 2015: $O(n \log n)$ time, change in any direction.
-  \item Hocking \emph{et al.}, 2020: $O(n \log n)$, directional constraints.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Constrained optimization algorithm speed}
-  Hocking {\it et al.}, Journal of Machine Learning Research 2020. 
-\vskip -0.5cm
-\begin{align*}
-\min_{\substack{
-  \mathbf u\in\RR^{S}
-\\
-   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
-}} & \ \
-    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
-\\
-      \text{subject to \hskip 0.8cm} &\ \ 
-\alert{ u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\} },
-  \nonumber\\
-  &\ \ 
-\alert{ u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\} }.
-  \nonumber
-\end{align*}
-
-\alert{Constraints used to force change up to peak state, then change
-  down to background noise state.}
-
-\includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
-
-\end{frame}
+\section{3. Constraints between adjacent segment means}
 
 \begin{frame}
   \frametitle{Optimization constraints defined using a graph}
@@ -234,6 +233,33 @@ $$
 
 \end{frame}
 
+
+% \begin{frame}
+%   \frametitle{Constrained optimization algorithm speed}
+%   Hocking {\it et al.}, Journal of Machine Learning Research 2020. 
+% \vskip -0.5cm
+% \begin{align*}
+% \min_{\substack{
+%   \mathbf u\in\RR^{S}
+% \\
+%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+% }} & \ \
+%     \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+% \\
+%       \text{subject to \hskip 0.8cm} &\ \ 
+% \alert{ u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\} },
+%   \nonumber\\
+%   &\ \ 
+% \alert{ u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\} }.
+%   \nonumber
+% \end{align*}
+
+% \alert{Constraints used to force change up to peak state, then change
+%   down to background noise state.}
+
+% \includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
+
+% \end{frame}
 
 % \begin{frame}
 %   \frametitle{Isotonic regression (all up changes, constant segments)}
@@ -304,7 +330,7 @@ $$
   \end{itemize}
 \end{frame}
 
-\section{Computing optimal changepoints subject to label constraints}
+\section{4. Optimal changepoints subject to label constraints}
 
 \begin{frame}
   \frametitle{Learning a complex graph using labels}
@@ -377,8 +403,8 @@ $$
   \end{itemize}
 \end{frame}
 
-\section{Learning to predict the number of changepoints}
-
+\section{4. Learning to predict the number of changepoints}
+ 
 \begin{frame}
   \frametitle{How to predict the number of changes?}
 

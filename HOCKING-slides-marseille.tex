@@ -62,16 +62,80 @@
 \begin{frame}
   \frametitle{Simulated data with constant and linear changes}
   \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
 \begin{frame}
   \frametitle{Number of candidates considered}
   \includegraphics[width=\textwidth]{figure-pred-candidates.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
 \begin{frame}
   \frametitle{Overall computation time}
   \includegraphics[width=\textwidth]{figure-pred-seconds.png}
+
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Computing various solutions using penalized solver}
+
+  How to compute the best model with a given number $P^*$ of change-points? 
+  
+
+  \begin{itemize}
+  \item Example: $P^*=100$ change-points?
+  \item Could run constrained solver to get all models from 0 to $P^*$ change-points.
+  \item Required number of DP iterations is linear in number of change-points, $O(P^*)$---slow if $P^*$ large.
+  \item Penalized solver returns best change-points for a given
+    penalty $\lambda\geq 0$ (but $\lambda$ that yields $P^*$ is
+    unknown).
+  \item Sequential search: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
+  \item DP iterations logarithmic in number of change-points, $O(\log P^*)$---fast for large $P^*$!
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized (OP) is faster than constrained (SN)}
+  
+  \includegraphics[width=0.8\textwidth]{figure-OP-faster-than-SN.png}
+
+  \begin{itemize}
+  \item Figure: genomic data, $N\approx 10^6$, 
+  \item Sequential search repeated runs penalized (OP) solver.
+  % \item For large models, penalized (OP) solver much faster
+  %   than constrained (SN) solver.
+  \item Example: for $N=10^7$, desired change-points $P^*=3000$.
+  \item Constrained (SN) solver: 100TB storage, 10 weeks.
+  \item Penalized (OP) solver: 100GB storage, 10 hours.
+  \end{itemize}
+  Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Computing ranges of solutions using penalized solver}
+
+  How to compute all models with penalties $\lambda\in[\underline \lambda, \overline \lambda]$?
+  \begin{itemize}
+  \item Example:  $\lambda\in[0.1, \overline 10.5]$?
+  \item CROPS: Change-points for a Range Of PenaltieS.
+  \item Haynes, \emph{et al.} Journal of Computational and Graphical Statistics, 26(1), 134-143 (2017).
+  \end{itemize}
+  
+  How to compute all models with number of change-points $P\in[\underline P, \overline P]$?
+  \begin{itemize}
+  \item Example: all models from 50 to 60 change-points?
+  \item CROCS: Change-points for a Range Of ComplexitieS.
+  \item Liehrmann \emph{et al.}, BMC Bioinformatics 22(323) (2021).
+  \end{itemize}
+
+  If $M$ is the number of models to compute (ex: 11 models from 50 to
+  60 change-points), then $O(M + \log \overline P)$ DP iterations---fast for large model sizes $\overline P$.
+  
 \end{frame}
 
 \section{New algorithms with constraints between adjacent segments}
@@ -156,7 +220,7 @@ $$
 
 \begin{frame}
   \frametitle{Optimization constraints defined using a graph}
-  Runge \emph{et al.}, Pre-print arXiv:2002.03646 (graph figures).
+  Runge \emph{et al.}, Journal of Statistical Software 2023 (graph figures).
 
   \includegraphics[width=0.7\textwidth]{gfpop-up-down}
 
@@ -235,8 +299,8 @@ $$
     Research 21(87):1--40, 2020.
   \item Runge V, \textbf{Hocking TD}, Romano G, Afghah F, Fearnhead P, Rigaill
     G. gfpop: an R Package for Univariate Graph-Constrained
-    Change-point Detection. Under review at Journal of Statistical
-    Software. Pre-print arXiv:2002.03646.
+    Change-point Detection. Journal of Statistical
+    Software 106(6) (2023).
   \end{itemize}
 \end{frame}
 
@@ -270,7 +334,7 @@ $$
 
 \begin{frame}
   \frametitle{Using expert labels as optimization constraints}
-  Hocking and Srivastava, Pre-print arXiv:2006.13967.
+  Hocking and Srivastava, Computational Statistics 38 (2023).
 
   \includegraphics[width=\linewidth]{LOPART-notation}
 
@@ -305,8 +369,7 @@ $$
     fast segmentation of annotated piecewise constant signals,
     Pre-print hal-00759129.
   \item \textbf{Hocking TD}, Srivastava A. Labeled Optimal
-    Partitioning. Under review at Computational Statistics. Pre-print
-    arXiv:2006.13967.
+    Partitioning. Computational Statistics 38 (2023).
   \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A Greedy Graph
     Search Algorithm Based on Changepoint Analysis for Automatic
     QRS-Complex Detection. Computers in Biology and Medicine 130
@@ -373,7 +436,7 @@ In practice $S$ is often unknown --- what value should we use?
   \item Generalization of classical CART regression tree learning algorithm.
   \item Can learn non-linear functions of inputs.
   \item More recently we implemented a similar idea in xgboost,
-    Barnwal \emph{et al.}, Pre-print arXiv:2006.04920.
+    Barnwal \emph{et al.}, Journal of Computational and Graphical Statistics 31(4) (2022).
   \end{itemize}
 \end{frame}
 
@@ -430,11 +493,11 @@ In practice $S$ is often unknown --- what value should we use?
   % \item \textbf{Hocking TD} and Killick R. Introduction to optimal
   %   changepoint detection algorithms. useR2017 conference tutorial.
   \item Barnwal A, Cho H, \textbf{Hocking TD}. Survival regression with
-    accelerated failure time model in XGBoost. Pre-print
-    arXiv:2006.04920.
+    accelerated failure time model in XGBoost. Journal of Computational and Graphical Statistics 31(4) (2022).
   \item Hillman J, \textbf{Hocking TD}. Optimizing ROC Curves with a
     Sort-Based Surrogate Loss Function for Binary Classification and
-    Changepoint Detection. Preprint arXiv:2107.01285.
+    Changepoint Detection. Journal of Machine Learning Research 24(70)
+    (2023).
   \end{itemize}
 \end{frame}
 

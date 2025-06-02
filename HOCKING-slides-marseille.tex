@@ -1,0 +1,462 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc} % usually not needed (loaded by default)
+\usepackage[T1]{fontenc}    % for accent marks.
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage[all]{xy}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{algorithmic}
+\usepackage{multirow}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Lik}{Lik}
+\DeclareMathOperator*{\PoissonLoss}{PoissonLoss}
+\DeclareMathOperator*{\Peaks}{Peaks}
+\DeclareMathOperator*{\Segments}{Segments}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator*{\minimize}{minimize}
+\newcommand{\sign}{\operatorname{sign}}
+\newcommand{\RR}{\mathbb R}
+\newcommand{\ZZ}{\mathbb Z}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\z}{$z = 2, 4, 3, 5, 1$} 
+
+\newcommand{\algo}[1]{\textcolor{#1}{#1}}
+\definecolor{PDPA}{HTML}{66C2A5}
+\definecolor{CDPA}{HTML}{FC8D62}
+\definecolor{GPDPA}{HTML}{4D4D4D}
+
+% Set transparency of non-highlighted sections in the table of
+% contents slide.
+\setbeamertemplate{section in toc shaded}[default][100]
+\AtBeginSection[]
+{
+  \setbeamercolor{section in toc}{fg=red} 
+  \setbeamercolor{section in toc shaded}{fg=black} 
+  \begin{frame}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\title{Algorithmes efficaces pour la détection de ruptures}
+
+\author{
+  Toby Dylan Hocking --- toby.dylan.hocking@usherbrooke.ca\\ 
+  Université de Sherbrooke, Département d'Informatique\\
+  %Logiciels pour l'Apprentissage, la StatiStique et l'Optimisation --- LASSO Lab \url{http://lassolab.org}\\
+  Joint work with Charles Truong, Guillem Rigaill, Vincent Runge\\
+  \includegraphics[height=5cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}
+}
+
+\date{}
+
+\maketitle
+
+\section{Brief history of optimal change-point algorithms}
+
+\begin{frame}
+  \frametitle{Simulated data with constant and linear changes}
+  \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Number of candidates considered}
+  \includegraphics[width=\textwidth]{figure-pred-candidates.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Overall computation time}
+  \includegraphics[width=\textwidth]{figure-pred-seconds.png}
+\end{frame}
+
+\section{New algorithms with constraints between adjacent segments}
+\begin{frame}
+  \frametitle{Changepoint detection algorithms for data over time}
+  Neuron spikes, Jewell \emph{et al.}, Biostatistics 2019.
+
+  \includegraphics[width=0.7\textwidth]{intro-neuroscience} 
+
+  Electrocardiograms (heart monitoring), 
+  Fotoohinasab \emph{et al.}, 
+  Asilomar conference 2020.
+
+  \includegraphics[width=0.5\textwidth]{intro-ecg} 
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Changepoint detection algorithms for data over space}
+
+  DNA copy number data for cancer diagnosis, Hocking \emph{et
+    al.}, Bioinformatics 2014.
+
+  \includegraphics[width=0.8\textwidth]{intro-breakpoints}
+
+  ChIP-seq data for understanding the human genome, Hocking 
+  \emph{et al.}, Bioinformatics 2017.
+
+  \includegraphics[width=0.8\textwidth]{intro-peaks}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optimal changepoint detection problem and algorithms}
+  \input{figure-PeakSeg}
+  \vskip -1cm    
+$$
+\min_{\substack{
+  \mathbf u\in\RR^{S}
+\\
+   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+  }} 
+    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+$$
+  \begin{itemize}
+  \item Algorithm inputs $n$ data $z_1, \dots, z_n$ and \# of segments $S$.
+  \item Goal is to compute best $S-1$ changepoints
+    $t_1 < \cdots < t_{S-1}$ and $S$ segment parameters $u_1,\dots,u_S$.
+  \item Hard non-convex optimization problem, na\" ively $O(n^S)$ time.
+  \item Auger and Lawrence 1989: $O(Sn^2)$ time algorithm.
+  \item Rigaill 2015: $O(n \log n)$ time, change in any direction.
+  \item Hocking \emph{et al.}, 2020: $O(n \log n)$, directional constraints.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Constrained optimization algorithm speed}
+  Hocking {\it et al.}, Journal of Machine Learning Research 2020. 
+\vskip -0.5cm
+\begin{align*}
+\min_{\substack{
+  \mathbf u\in\RR^{S}
+\\
+   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+}} & \ \
+    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+\\
+      \text{subject to \hskip 0.8cm} &\ \ 
+\alert{ u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\} },
+  \nonumber\\
+  &\ \ 
+\alert{ u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\} }.
+  \nonumber
+\end{align*}
+
+\alert{Constraints used to force change up to peak state, then change
+  down to background noise state.}
+
+\includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optimization constraints defined using a graph}
+  Runge \emph{et al.}, Pre-print arXiv:2002.03646 (graph figures).
+
+  \includegraphics[width=0.7\textwidth]{gfpop-up-down}
+
+  \begin{itemize}
+  \item Purple Dw/Up nodes represent hidden states.
+  \item \#/$\emptyset$ nodes constrain start/end state.
+  \item Edges represent possible state transitions.
+  \item \texttt{gfpop} R package with C++ code computes optimal
+    changepoints for user-defined constraint graphs.
+  \end{itemize}
+
+\end{frame}
+
+
+% \begin{frame}
+%   \frametitle{Isotonic regression (all up changes, constant segments)}
+%   \includegraphics[width=\textwidth]{gfpop-isotonic}
+% \end{frame}
+
+\begin{frame}
+  \frametitle{All up changes, exponential decaying segments}
+  \includegraphics[width=0.5\textwidth]{gfpop-decay}
+
+  Jewell \emph{et al.}, Biostatistics 2019.
+
+  \includegraphics[width=0.7\textwidth]{intro-neuroscience} 
+
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Many changes up to and down from each spike}
+%   \includegraphics[width=\textwidth]{gfpop-free-up-down}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Relevant changes (any direction, large in absolute value)}
+%   \includegraphics[width=\textwidth]{gfpop-absolute}
+% \end{frame}
+
+\begin{frame}
+  \frametitle{Complex graph for electrocardiogram data}
+  \includegraphics[width=0.5\textwidth]{gfpop-ecg-graph}
+  \includegraphics[width=\textwidth]{gfpop-ecg-data}
+
+  Fotoohinasab \emph{et al.}, Asilomar conference 2020.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{References}
+  \scriptsize
+  \begin{itemize}
+  \item Auger IE and Lawrence CE. Algorithms for the optimal
+    identification of segment neighborhoods. Bull Math Biol 51:39–54
+    (1989).
+  \item G Rigaill.  A pruned dynamic programming algorithm to recover
+    the best segmentations with 1 to kmax change-points. Journal de la
+    Société Française de la Statistique, 156(4), 2015. 
+  \item \textbf{Hocking TD}, Boeva V, Rigaill G, Schleiermacher G,
+    Janoueix-Lerosey I, Delattre O, Richer W, Bourdeaut F, Suguro M,
+    Seto M, Bach F, Vert J-P. SegAnnDB: interactive Web-based genomic
+    segmentation. Bioinformatics (2014) 30 (11): 1539-1546.
+  \item \textbf{Hocking TD}, Goerner-Potvin P, Morin A, Shao X,
+    Pastinen T, Bourque G. Optimizing ChIP-seq peak detectors using
+    visual labels and supervised machine learning. Bioinformatics
+    (2017) 33 (4): 491-499.
+  \item Jewell S, \textbf{Hocking TD}, Fearnhead P, Witten D. Fast Nonconvex
+    Deconvolution of Calcium Imaging Data. Biostatistics (2019).
+  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A
+    Graph-Constrained Changepoint Learning Approach for Automatic
+    QRS-Complex Detection. Asilomar Conference on Signals, Systems,
+    and Computers (2020).
+  \item \textbf{Hocking TD}, Rigaill G, Fearnhead P, Bourque G. Constrained
+    Dynamic Programming and Supervised Penalty Learning Algorithms for
+    Peak Detection in Genomic Data. Journal of Machine Learning
+    Research 21(87):1--40, 2020.
+  \item Runge V, \textbf{Hocking TD}, Romano G, Afghah F, Fearnhead P, Rigaill
+    G. gfpop: an R Package for Univariate Graph-Constrained
+    Change-point Detection. Under review at Journal of Statistical
+    Software. Pre-print arXiv:2002.03646.
+  \end{itemize}
+\end{frame}
+
+\section{Computing optimal changepoints subject to label constraints}
+
+\begin{frame}
+  \frametitle{Learning a complex graph using labels}
+\parbox{0.6\textwidth}{
+  \includegraphics[width=\linewidth]{gfpop-ecg-iterations}
+} \parbox{0.35\textwidth}{
+  \begin{itemize}
+  \item  Fotoohinasab \emph{et al.}, 2021.
+\item Simple initial graph is iteratively edited (red) to agree with expert
+ labeled regions (orange rectangles).
+\item Easier for expert to provide labels than graph.
+  \end{itemize}
+ }
+\end{frame}
+
+\begin{frame}
+  \frametitle{What if no models agree with expert labels?}
+  Hocking and Rigaill, Pre-print hal-00759129.
+
+  \includegraphics[width=0.8\linewidth]{SegAnnot-motivation}
+
+  \begin{itemize}
+  \item Expert wants: one changepoint in each label (red rectangle).
+  \item No model is consistent with all three labels.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Using expert labels as optimization constraints}
+  Hocking and Srivastava, Pre-print arXiv:2006.13967.
+
+  \includegraphics[width=\linewidth]{LOPART-notation}
+
+  \begin{itemize}
+  \item Previous OPART model (blue) ignores labels (two errors).
+  \item Main idea: add optimization constraints to ensure that there
+    is the right number of changepoints predicted in each label.
+  \item Proposed LOPART model (black) consistent with labels.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Label constraints and directional constraints}
+  Stenberg and Hocking, in progress.
+
+  \includegraphics[width=\linewidth]{FLOPART-example}
+
+  \begin{itemize}
+  \item Previous PeakSegOptimal algorithm (bottom) ignores labels (two
+    errors).
+  \item Proposed FLOPART model (top) consistent with labels, and
+    interpretable in terms of up changes to peaks and down changes to
+    background noise.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{References}
+  \scriptsize
+  \begin{itemize}
+  \item \textbf{Hocking TD}, Rigaill G. SegAnnot: an R package for
+    fast segmentation of annotated piecewise constant signals,
+    Pre-print hal-00759129.
+  \item \textbf{Hocking TD}, Srivastava A. Labeled Optimal
+    Partitioning. Under review at Computational Statistics. Pre-print
+    arXiv:2006.13967.
+  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A Greedy Graph
+    Search Algorithm Based on Changepoint Analysis for Automatic
+    QRS-Complex Detection. Computers in Biology and Medicine 130
+    (2021).
+  \end{itemize}
+\end{frame}
+
+\section{Learning to predict the number of changepoints}
+
+\begin{frame}
+  \frametitle{How to predict the number of changes?}
+
+  We assumed that the number of segments $S$ is provided as an input
+  parameter to our optimization algorithm.
+
+\begin{align*}
+\min_{\substack{
+  \mathbf u\in\RR^{S}
+\\
+   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+}} & \ \
+    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+  \nonumber
+\end{align*}
+
+In practice $S$ is often unknown --- what value should we use?
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Learning to predict number of changes similar to SVM}
+  Hocking \emph{et al.}, Int'l Conference on Machine Learning 2013.
+
+  \includegraphics[width=0.8\linewidth]{icml13-hard-margin}
+  \begin{itemize}
+  \item Train on several data sequences with labels (dots).
+  \item Want to compute function between white and black dots.
+  \item SVM margin is multi-dimensional (diagonal).
+  \item Here margin to maximize is one-dimensional (horizontal).
+  \item Learned function predicts number of changepoints/segments.
+  \end{itemize}
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Test accuracy/AUC in five-fold cross-validation}
+  
+%   Hocking and Killick, useR2017 conference tutorial.
+
+%   \includegraphics[width=0.8\linewidth]{supervised-test-metrics}
+
+%   Learned linear functions for predicting the number of changepoints
+%   (IntervalRegressionCV, survreg) are much more accurate than constant
+%   baseline and unsupervised BIC/SIC.
+  
+% \end{frame}
+
+\begin{frame}
+  \frametitle{Decision tree learns non-linear function of inputs}
+  
+  Drouin \emph{et al.}, Neural Information Processing Systems 2017.
+
+  \includegraphics[width=\linewidth]{mmit-functions}
+  \begin{itemize}
+  \item Generalization of classical CART regression tree learning algorithm.
+  \item Can learn non-linear functions of inputs.
+  \item More recently we implemented a similar idea in xgboost,
+    Barnwal \emph{et al.}, Pre-print arXiv:2006.04920.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Is maximizing Area Under the ROC Curve desirable?}
+  
+  \parbox{2in}{In binary classification the ROC curve is monotonic.} \parbox{2in}{
+  \includegraphics[height=1in]{figure-more-than-one-less-auc} 
+}
+
+\parbox{2in}{In changepoint detection it can have loops.} \parbox{2in}{
+  \includegraphics[height=1in]{figure-more-than-one-more-auc}
+}
+
+  \parbox{2in}{We propose instead to minimize the AUM = Area Under
+    the Minimum of false positives and false negatives, as a function of prediction threshold.} \parbox{2in}{
+  \includegraphics[height=1in]{figure-more-than-one-more-aum}
+}
+
+  % \includegraphics[width=0.4\linewidth]{figure-more-than-one-less-auc} 
+  % \includegraphics[width=0.4\linewidth]{figure-more-than-one-more-auc}
+
+  % \includegraphics[width=0.7\linewidth]{figure-more-than-one-more-aum}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{AUM gradient descent algorithm optimizes AUC}
+  
+  Hillman and Hocking, in progress.
+
+  \includegraphics[width=0.49\linewidth]{figure-aum-optimized-iterations-emph}
+  \includegraphics[width=0.49\linewidth]{figure-aum-train-pred-only} 
+
+  \begin{itemize}
+  \item Initial predictions: minimum label errors.
+  \item ROC curves become more regular/monotonic after optimization,
+    but label error increases.
+  \item Trade-off between AUC and label error optimization that does
+    not exist in binary classification.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{References}
+  \scriptsize
+  \begin{itemize}
+  \item \textbf{Hocking TD}, Rigaill G, Bach F, Vert J-P. Learning
+    sparse penalties for change-point detection using max-margin
+    interval regression. International Conference on Machine Learning
+    2013.
+  \item Drouin A, \textbf{Hocking TD}, Laviolette F. Maximum margin interval
+    trees. Neural Information Processing Systems 2017.
+  % \item \textbf{Hocking TD} and Killick R. Introduction to optimal
+  %   changepoint detection algorithms. useR2017 conference tutorial.
+  \item Barnwal A, Cho H, \textbf{Hocking TD}. Survival regression with
+    accelerated failure time model in XGBoost. Pre-print
+    arXiv:2006.04920.
+  \item Hillman J, \textbf{Hocking TD}. Optimizing ROC Curves with a
+    Sort-Based Surrogate Loss Function for Binary Classification and
+    Changepoint Detection. Preprint arXiv:2107.01285.
+  \end{itemize}
+\end{frame}
+
+\section{Summary and Discussion}
+
+\begin{frame}[fragile]
+  \frametitle{Summary and Discussion}
+
+  \begin{itemize}
+  \item Optimal changepoint detection in $n$ data is a non-convex
+    problem, na\" ively a $O(n^S)$ computation for $S$ segments.
+  \item Recent algorithms can compute a globally optimal changepoint
+    model much faster, $O(n\log n)$.
+  \item Directional constraint graphs specified using domain prior
+    knowledge, or learned using expert labels.
+  \item Expert labels can also be used as optimization constraints, to
+    ensure that predicted changepoints are consistent.
+  \item Number of changes can be predicted with new learning
+    algorithms, including ROC curve optimization.
+  \item Let's collaborate! toby.hocking@nau.edu
+  \end{itemize}
+  
+\end{frame}
+
+\end{document}

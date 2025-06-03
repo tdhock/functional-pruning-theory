@@ -51,22 +51,23 @@
 
 \title{
   %Algorithmes efficaces pour la détection de ruptures
-  Frontiers in optimal change-point detection algorithms
+  Frontiers in optimal change-point algorithms
 }
 
 \author{
   Toby Dylan Hocking --- toby.dylan.hocking@usherbrooke.ca\\ 
   Université de Sherbrooke, Département d'Informatique\\
   %Logiciels pour l'Apprentissage, la StatiStique et l'Optimisation --- LASSO Lab \url{http://lassolab.org}\\
-  Joint work with Charles Truong, Guillem Rigaill, Vincent Runge\\
-  \includegraphics[height=5cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}
+  Collaborators: Charles Truong, Guillem Rigaill, Vincent Runge\\
+  \includegraphics[height=5cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}\\
+  Thanks to DATAIA for financing 6 month research visit in Paris!
 }
 
 \date{}
 
 \maketitle
 
-\section{1. Introduction, applications, recent algorithms} 
+\section{1. Drawbacks of classic algorithms} 
 \begin{frame}
   \frametitle{Changepoint detection algorithms for data over time}
   Neuron spikes, Jewell \emph{et al.}, Biostatistics 2019.
@@ -209,6 +210,8 @@ $$
 \end{itemize}
 \end{frame}
 
+\section{2. Linear time optimal algorithms with pruning }
+
 \begin{frame}
   \frametitle{Penalized problem, PELT algorithm}
   \textbf{Penalized} optimal change-point problem:
@@ -229,8 +232,6 @@ $$
 \item Time complexity: best $O(n)$, worst $O(n^2)$.
 \end{itemize}
 \end{frame}
-
-%\section{2. History of optimal change-point algorithms}
 
 \begin{frame}
   \frametitle{Simulated data with constant and linear changes}
@@ -299,7 +300,7 @@ $$
 \item \textbf{Functional pruning} considers a small subset of candidates.
 \item Same output: one optimal change-point model.
 \item Same time as PELT in theory: best $O(n)$, worst $O(n^2)$.
-\item But much faster in practice!
+\item But much faster in practice! (never quadratic)
 \end{itemize}
 \end{frame}
 
@@ -404,8 +405,8 @@ $$
 \item Combines ideas from PELT and FPOP algos.
 \item Solve a Langrange dual problem to prune change-points.
 \item Easier to code than FPOP.
-\item Same time as PELT/FPOP in theory: best $O(n)$, worst $O(n^2)$.
-\item But much faster in practice!
+\item Same time as FPOP in theory: best $O(n)$, worst $O(n^2)$.
+\item But much faster in practice! (constant factors)
 \end{itemize}
 \end{frame}
 
@@ -423,7 +424,7 @@ $$
 \begin{frame}
   \frametitle{Number of candidates considered}
   \includegraphics[width=\textwidth]{figure-pred-candidates-O.png}
-
+ 
   \begin{itemize}
   \item Data sizes varied from 100 to 10,000,000.
   \item Slope on log-log plot indicates asymptotic time complexity.
@@ -470,69 +471,12 @@ $$
 
 \begin{itemize}
 \item DUST always fast in 1d data, no matter how many changes.
-\item Worst case $O(n^2)$ only happens in pathological data.
+\item Is it possible to go faster and stay optimal?
+\only<2>{\item Conjecture: only by constant factors.}
 \end{itemize}
 \end{frame}
- 
-\begin{frame}
-  \frametitle{Computing various solutions using penalized solver}
 
-  How to compute the best model with a given number $P^*$ of change-points? 
-  
-
-  \begin{itemize}
-  \item Example: $P^*=100$ change-points?
-  \item Could run constrained solver to get all models from 0 to $P^*$ change-points.
-  \item Required number of DP iterations is linear in number of change-points, $O(P^*)$---slow if $P^*$ large.
-  \item Penalized solver returns best change-points for a given
-    penalty $\lambda\geq 0$ (but $\lambda$ that yields $P^*$ is
-    unknown).
-  \item Sequential search: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
-  \item DP iterations logarithmic in number of change-points, $O(\log P^*)$---fast for large $P^*$!
-  \end{itemize}
-  
-\end{frame}
-
-\begin{frame}
-  \frametitle{Penalized (OP) is faster than constrained (SN)}
-  
-  \includegraphics[width=0.8\textwidth]{figure-OP-faster-than-SN.png}
-
-  \begin{itemize}
-  \item Figure: genomic data, $N\approx 10^6$, 
-  \item Sequential search repeated runs penalized (OP) solver.
-  % \item For large models, penalized (OP) solver much faster
-  %   than constrained (SN) solver.
-  \item Example: for $N=10^7$, desired change-points $P^*=3000$.
-  \item Constrained (SN) solver: 100TB storage, 10 weeks.
-  \item Penalized (OP) solver: 100GB storage, 10 hours.
-  \end{itemize}
-  Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
-\end{frame}
-
-\begin{frame}
-  \frametitle{Computing ranges of solutions using penalized solver}
-
-  How to compute all models with penalties $\lambda\in[\underline \lambda, \overline \lambda]$?
-  \begin{itemize}
-  \item Example:  $\lambda\in[0.1, \overline 10.5]$?
-  \item CROPS: Change-points for a Range Of PenaltieS.
-  \item Haynes, \emph{et al.} Journal of Computational and Graphical Statistics, 26(1), 134-143 (2017).
-  \end{itemize}
-  
-  How to compute all models with number of change-points $P\in[\underline P, \overline P]$?
-  \begin{itemize}
-  \item Example: all models from 50 to 60 change-points?
-  \item CROCS: Change-points for a Range Of ComplexitieS.
-  \item Liehrmann \emph{et al.}, BMC Bioinformatics 22(323) (2021).
-  \end{itemize}
-
-  If $M$ is the number of models to compute (ex: 11 models from 50 to
-  60 change-points), then $O(M + \log \overline P)$ DP iterations---fast for large model sizes $\overline P$.
-  
-\end{frame}
-
-\section{2. Constraints between adjacent segment means}
+\section{3. Constraints between adjacent segment means}
 
 \begin{frame}
   \frametitle{Optimization constraints defined using a graph}
@@ -612,10 +556,10 @@ $$
 
 \end{frame}
 
-\section{3. Optimal changepoints subject to label constraints}
+\section{4. Optimal changepoints subject to label constraints}
 
 \begin{frame}
-  \frametitle{Learning a complex graph using labels}
+  \frametitle{Learning a complex graph using labeled regions}
 \parbox{0.6\textwidth}{
   \includegraphics[width=\linewidth]{gfpop-ecg-iterations}
 } \parbox{0.35\textwidth}{
@@ -624,6 +568,21 @@ $$
 \item Simple initial graph is iteratively edited (red) to agree with expert
  labeled regions (orange rectangles).
 \item Easier for expert to provide labels than graph.
+  \end{itemize}
+ }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Learning penalty using labeled regions}
+\parbox{0.6\textwidth}{
+  \includegraphics[width=\linewidth]{supervised-change-label-error}
+} \parbox{0.35\textwidth}{
+  \begin{itemize}
+  \item Figure: Nguyen and Hocking, arXiv:2505.07413.
+  \item fp=false positive (too many changes).
+  \item fn=false negative (too few changes).
+  \item Try different $\lambda$ values until we find a model with no
+    errors.
   \end{itemize}
  }
 \end{frame}
@@ -669,7 +628,7 @@ $$
   \end{itemize}
 \end{frame}
 
-\section{4. Learning to predict the number of changepoints}
+\section{5. Learning to predict the number of changepoints} 
  
 \begin{frame}
   \frametitle{How to predict the number of changes?}
@@ -733,6 +692,15 @@ In practice $S$ is often unknown --- what value should we use?
 \end{frame}
 
 \begin{frame}
+  \frametitle{Penalty prediction using recurrent neural network}
+  
+  \includegraphics[width=\linewidth]{penalty-pred-RNN}
+  \begin{itemize}
+  \item Nguyen and Hocking, arXiv:2505.07413.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
   \frametitle{Is maximizing Area Under the ROC Curve desirable?}
   
   \parbox{2in}{In binary classification the ROC curve is monotonic.} \parbox{2in}{
@@ -770,6 +738,78 @@ In practice $S$ is often unknown --- what value should we use?
   \item Trade-off between AUC and label error optimization that does
     not exist in binary classification.
   \end{itemize}
+\end{frame}
+
+\section{6. Computing range of models using penalized solver} 
+ 
+\begin{frame}
+  \frametitle{Computing various solutions using penalized solver}
+
+  How to compute the best model with $P^*$ change-points? 
+
+  \begin{itemize}
+  \item Example: want $P^*=100$ change-points.
+  \end{itemize}
+
+  Pruned dynamic programming algo: Rigaill, JSFDS (2015).
+  \begin{itemize}
+  \item Run \alert{constrained} solver to get all model sizes from 0 to 100.
+  \item $O(\alert{P^*} n\log n)$ time---fast in $n$.
+  \item Slow in $P^*$: we do not want model sizes 0 to 99.
+  \end{itemize}
+
+  Sequential search algo: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
+  \begin{itemize}
+  \item Penalized solver returns best change-points for a given
+    penalty $\lambda\geq 0$ (but $\lambda$ that yields $P^*$ is
+    unknown).
+  \item Run \alert{penalized} solver for an special sequence of $\lambda$ values.
+  \item $O(\alert{\log P^*} n\log n)$ time---fast in $n$ and $P^*$!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized (OP) is faster than constrained (SN)}
+  
+  \includegraphics[width=0.8\textwidth]{figure-OP-faster-than-SN.png}
+
+  \begin{itemize}
+  \item Figure: genomic data, $N\approx 10^6$, 
+  \item Sequential search repeated runs penalized (OP) solver.
+  % \item For large models, penalized (OP) solver much faster
+  %   than constrained (SN) solver.
+  \item Example: for $N=10^7$, desired change-points $P^*=3000$.
+  \item Constrained (SN) solver: $\approx$100TB storage, 10 weeks.
+  \item Penalized (OP) solver: 100GB storage, 10 hours.
+  \end{itemize}
+  Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Fast computation of large model sizes and ranges}
+
+  How to compute all models with penalties $\lambda\in[\underline \lambda, \overline \lambda]$?
+  \begin{itemize}
+  \item Example: want all models with $\lambda\in[0.1, \overline 10.5]$.
+  \item CROPS: Change-points for a Range Of PenaltieS.
+  \item Haynes, \emph{et al.} Journal of Computational and Graphical Statistics, 26(1), 134-143 (2017).
+  \end{itemize}
+  
+  How to compute all models with number of change-points $P\in[\underline P, \overline P]$?
+  \begin{itemize}
+  \item Example: want all models from 50 to 60 change-points.
+  \item CROCS: Change-points for a Range Of ComplexitieS.
+  \item Liehrmann \emph{et al.}, BMC Bioinformatics 22(323) (2021).
+  \end{itemize}
+  Both exploit the piecewise linear solution path to obtain an efficient algorithm, linear time in the number of models!
+  % \begin{itemize}
+  % \item Avoid computing smaller 
+  % \end{itemize}
+  % If $M$ is the number of models to compute (ex: 11 models from 50 to
+  % 60 change-points), then $O(M + \log \overline P)$ DP
+  % iterations---fast for large model sizes $\overline P$ (no need to
+  % compute sizes 0 to 49).
+  
 \end{frame}
 
 \section{Summary and Discussion}

@@ -1,4 +1,10 @@
 \documentclass{beamer}
+\usepackage{xcolor}
+\definecolor{OPART}{HTML}{7F7F7F}
+\definecolor{PELT}{HTML}{FF0000}
+\definecolor{FPOP}{HTML}{0000FF}
+\definecolor{DUST}{HTML}{00BFFF}
+\newcommand{\algo}[1]{\textcolor{#1}{#1}}
 \usepackage[utf8]{inputenc} % usually not needed (loaded by default)
 \usepackage[T1]{fontenc}    % for accent marks.
 \usepackage{tabularx}
@@ -43,7 +49,10 @@
 
 \begin{document}
 
-\title{Algorithmes efficaces pour la détection de ruptures}
+\title{
+  %Algorithmes efficaces pour la détection de ruptures
+  Frontiers in optimal change-point detection algorithms
+}
 
 \author{
   Toby Dylan Hocking --- toby.dylan.hocking@usherbrooke.ca\\ 
@@ -99,19 +108,127 @@ $$
   }} 
     \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
 $$
-  \begin{itemize}
+\begin{itemize}
   \item Algorithm inputs $n$ data $z_1, \dots, z_n$ and \# of segments $S$.
+  \item Loss function $\ell$ measures fit of means $u_s$ to data $z_i$.
   \item Goal is to compute best $S-1$ changepoints
     $t_1 < \cdots < t_{S-1}$ and $S$ segment parameters $u_1,\dots,u_S$.
   \item Non-convex optimization problem, na\" ively $O(n^S)$ time.
   % \item Auger and Lawrence 1989: $O(Sn^2)$ time algorithm.
   % \item Rigaill 2015: $O(n \log n)$ time, change in any direction.
   % \item Hocking \emph{et al.}, 2020: $O(n \log n)$, directional constraints.
-  \item Binary segmentation is heuristic (not guaranteed to compute optimal $u,t$).
-  \item Dynamic programming algorithms can compute optimal $u,t$.
+  \item Fast approximate heuristic algorithms?
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Fast heuristics can yield inaccurate change-points}
+  \includegraphics[width=\textwidth]{figure-2d-hmm-sim-noise-many-errors}
+  \begin{itemize}
+  \item Simulation: angular data, 2 dimensions/features.
+  \item Heuristics are approximate optimization algorithms.
+  \item Fast: linear $O(n)$ time for $n$ data.
+  \item Not guaranteed to compute change-points with best loss.
+  \item BINSEG = Binary segmentation (Scott and Knott, 1974).
+  \item HMM = Hidden Markov Model (Rabiner, 1989).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Constrained problem, Lasso heuristic}
+  \textbf{Constrained} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{
+  \sum_{i=1}^{n} \ell( \mu_i,  z_i)
+}_{
+  \text{Loss (data-fitting)}
+}
+\text{ subject to }
+\underbrace{
+  \sum_{i=2}^n I[\mu_{i-1}\neq \mu_i] \leq S.
+}_{
+  \text{Number of change-points (regularization)}
+}
+$$
+\begin{itemize}
+\item Hyper-parameter is number of segments $S$.
+\item Indicator function $I[\cdot ]\in\{0,1\}$ is non-convex.
+\item Gradient descent yields local min.
+\item Analog with best subset regression: hyper-parameter is number of variables (combinatorial search, relax to Lasso).
+\item Fused Lasso for change-points (Tibshirani \emph{et al.}, JRSSB 2005).
+\item Lasso selects too many variables (false positive change-points).
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Constrained problem, classic dynamic programming solution}
+  \textbf{Constrained} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}}\text{ subject to }\underbrace{\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i] \leq S.}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item Auger and Lawrence, Algorithms for the optimal identification of
+  \textbf{segment neighborhoods}, Bull Math Biol (1989).
+\item Optimal recursive updates (dynamic programming algorithm).
+\item Let $C_{n,S}$ be best cost up to $n$ data and $S$ segments.
+\item Start by computing $C_{1,1}$ to $C_{1,n}$ (cum sum).
+\item Then compute $C_{2,2}$ to $C_{2,n}$, $C_{3,3},\dots,C_{3,n}$, etc.
+\item Output all optimal models from 1 to $S$ segments.
+\item Time complexity $O(S n^2)$ --- faster than naïve $O(n^S)$.
+\item Still too slow for large data $n$ and model sizes $S$.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Penalized problem, classic dynamic programming solution}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item Hyper-parameter is non-negative penalty $\lambda\geq 0$.
+\item Jackson, \emph{et al.}, An algorithm for \textbf{optimal
+    partitioning} of data on an interval, IEEE Sig Proc Lett (2005).
+\item Optimal recursive updates (dynamic programming algorithm).
+\item Let $C_{n}$ be best cost up to $n$ data.
+\item Recursively compute $C_{1}, C_2,\dots, C_{n}$.
+\item Time complexity $O(n^2)$ --- faster than $O(S n^2)$.
+\item User can not directly specify number of segments $S$.
+\item Output one optimal change-point model (not all in $1,\dots,S$).
+\item Quadratic time is still too slow for large data $n$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized problem, PELT algorithm}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item Recursively compute $C_{1}, C_2,\dots, C_{n}$.
+\item Classic DP considers all previous change-points.
+\item At time $n$, consider $C_1,\dots,C_{n-1}$.
+\item Pruned Exact Linear Time algo: Killick, \emph{et al.}, JASA (2012).
+\item At time $n$ consider only a subset of $C_1,\dots,C_{n-1}$.
+\item Easy to implement, with only 1 additional line of code!
+\item Same output: one optimal change-point model.
+\item Time complexity: best $O(n)$, worst $O(n^2)$.
+\end{itemize}
+\end{frame}
 
 %\section{2. History of optimal change-point algorithms}
 
@@ -119,44 +236,244 @@ $$
   \frametitle{Simulated data with constant and linear changes}
   \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes.png}
 
+  \begin{itemize}
+  \item Constant changes: always 4 segments (for any data size $n$).
+  \item Linear: change every 10 data.
+  \end{itemize}
+  
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
+
 \begin{frame}
-  \frametitle{PELT pruning}
+  \frametitle{PELT algorithm demonstration}
   \includegraphics[width=\textwidth]{pelt-prune-1.png}
 
+  \begin{itemize}
+  \item After each change in data, PELT prunes prior candidates.
+  \item More changes---more pruning---faster.
+  \end{itemize}
+  
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
 \begin{frame}
-  \frametitle{FPOP pruning}
+  \frametitle{Penalized problem, PELT algorithm}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{tabular}{cccc}
+  \# changes in data & Algorithm & \# candidates per data & Overall time \\
+  \hline
+  Constant $O(1)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$\\
+                     & \algo{PELT} &  $O(n)$ & $O(n^2)$\\
+  \hline
+  Linear $O(n)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$ \\
+   & \algo{PELT} &  \textcolor{PELT}{$O(1)$} & \textcolor{PELT}{$O(n)$} \\
+\end{tabular}
+
+\begin{itemize}
+\item PELT fast/linear for data with frequent changes.
+\item But slow/quadratic for long runs of data without changes.
+\item Can we go faster when there are no changes?
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Yes, faster with FPOP algorithm!}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item FPOP algo: Maidstone, \emph{et al.}, Stat. and Comp. (2017).
+\item Let $C_n(m)$ be the best cost with mean $m$ at $n$ data.
+\item Recursively compute functions $C_{1}(m), C_2(m),\dots, C_{n}(m)$.
+\item \textbf{Functional pruning} considers a small subset of candidates.
+\item Same output: one optimal change-point model.
+\item Same time as PELT in theory: best $O(n)$, worst $O(n^2)$.
+\item But much faster in practice!
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{FPOP algorithm demonstration}
   \includegraphics[width=\textwidth]{fpop-prune-1.png}
+
+  \begin{itemize}
+  \item FPOP always prunes, whether or not there are changes in data.
+  \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
  
 \begin{frame}
-  \frametitle{DUST pruning}
+  \frametitle{Penalized problem, FPOP algorithm}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{tabular}{cccc}
+  \# changes in data & Algorithm & \# candidates per data & Overall time \\
+  \hline
+  Constant $O(1)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$\\
+                     & \algo{PELT} &  $O(n)$ & $O(n^2)$\\
+                     & \algo{FPOP} &  \textcolor{FPOP}{$O(\log n)$} & \textcolor{FPOP}{$O(n\log n)$}\\
+  \hline
+  Linear $O(n)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$ \\
+   & \algo{PELT} &  \textcolor{PELT}{$O(1)$} & \textcolor{PELT}{$O(n)$} \\
+   & \algo{FPOP} &  \textcolor{FPOP}{$O(1)$} & \textcolor{FPOP}{$O(n)$} \\
+\end{tabular}
+
+\begin{itemize}
+\item FPOP always fast in 1d data, no matter how many changes.
+\item Worst case $O(n^2)$ only happens in pathological data.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized problem, FPOP algorithm}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item FPOP algo: Maidstone, \emph{et al.}, Stat. and Comp. (2017).
+\item Let $C_n(m)$ be the best cost with mean $m$ at $n$ data.
+\item Recursively compute functions $C_{1}(m), C_2(m),\dots, C_{n}(m)$.
+\item \textbf{Functional pruning} considers a small subset of candidates.
+\item Same output: one optimal change-point model.
+\item Time complexity best $O(n)$, worst $O(n^2)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized problem, FPOP extensions}
+Functional pruning can handle:
+\begin{itemize}
+\item Inequality constraints between segment means (next section).
+\item Robust loss functions: Fearnhead and Rigaill,
+  %Changepoint detection in the presence of outliers,
+  JASA (2019).
+\item Auto-regressive models: Romano \emph{et al.},
+  %Detecting Abrupt Changes in the Presence of Local Fluctuations and Autocorrelated Noise,
+  JASA (2021).
+\item Storage on disk: Hocking \emph{et al.}, JSS (2022).
+\item Multi-variate time series: Pishchagina \emph{et al.},
+  %Geometric-Based Pruning Rules for Change Point Detection in Multiple Independent Time Series,
+  Computo (2024).
+\item Multi-scale penalties: Liehrmann and Rigaill, JCGS (2025).
+\end{itemize}
+But:
+\begin{itemize}
+\item Difficult to implement (100s of lines of C++ code).
+\item Not as fast in high dimensional data/models.
+\end{itemize}
+Is it possible to go faster?
+\end{frame}
+
+\begin{frame}
+  \frametitle{Yes, faster with DUST algorithm!}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{itemize}
+\item Truong and Runge, An Efficient Algorithm for Exact
+  Segmentation of Large Compositional and Categorical Time Series,
+  Stat (2024).
+\item DUST algo: DUality Sample Test.
+\item Combines ideas from PELT and FPOP algos.
+\item Solve a Langrange dual problem to prune change-points.
+\item Easier to code than FPOP.
+\item Same time as PELT/FPOP in theory: best $O(n)$, worst $O(n^2)$.
+\item But much faster in practice!
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{DUST algorithm demonstration}
   \includegraphics[width=\textwidth]{dust-prune-1.png}
+
+  \begin{itemize}
+  \item DUST always prunes, whether or not there are changes in data.
+  \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
 \begin{frame}
   \frametitle{Number of candidates considered}
-  \includegraphics[width=\textwidth]{figure-pred-candidates.png}
+  \includegraphics[width=\textwidth]{figure-pred-candidates-O.png}
+
+  \begin{itemize}
+  \item Data sizes varied from 100 to 10,000,000.
+  \item Slope on log-log plot indicates asymptotic time complexity.
+  \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
 \begin{frame}
   \frametitle{Overall computation time}
-  \includegraphics[width=\textwidth]{figure-pred-seconds.png}
+  \includegraphics[width=\textwidth]{figure-pred-seconds-O.png}
+
+  \begin{itemize}
+  \item N= data size computable in time limit of 1 second.
+  \item FPOP 10x faster than PELT.
+  \item DUST 10x faster than FPOP.
+  \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Penalized problem, DUST algorithm}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+\begin{tabular}{cccc}
+  \# changes in data & Algorithm & \# candidates per data & Overall time \\
+  \hline
+  Constant $O(1)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$\\
+                     & \algo{PELT} &  $O(n)$ & $O(n^2)$\\
+                     & \algo{FPOP} &  \textcolor{FPOP}{$O(\log n)$} & \textcolor{FPOP}{$O(n\log n)$}\\
+                     & \algo{DUST} &  \textcolor{DUST}{$O(\log n)$} & \textcolor{DUST}{$O(n\log n)$}\\
+  \hline
+  Linear $O(n)$ & \algo{OPART} &  $O(n)$ & $O(n^2)$ \\
+   & \algo{PELT} &  \textcolor{PELT}{$O(1)$} & \textcolor{PELT}{$O(n)$} \\
+   & \algo{FPOP} &  \textcolor{FPOP}{$O(1)$} & \textcolor{FPOP}{$O(n)$} \\
+   & \algo{DUST} &  \textcolor{DUST}{$O(1)$} & \textcolor{DUST}{$O(n)$} \\
+\end{tabular}
+
+\begin{itemize}
+\item DUST always fast in 1d data, no matter how many changes.
+\item Worst case $O(n^2)$ only happens in pathological data.
+\end{itemize}
+\end{frame}
+ 
 \begin{frame}
   \frametitle{Computing various solutions using penalized solver}
 
@@ -215,7 +532,7 @@ $$
   
 \end{frame}
 
-\section{3. Constraints between adjacent segment means}
+\section{2. Constraints between adjacent segment means}
 
 \begin{frame}
   \frametitle{Optimization constraints defined using a graph}
@@ -295,42 +612,7 @@ $$
 
 \end{frame}
 
-\begin{frame}
-  \frametitle{References}
-  \scriptsize
-  \begin{itemize}
-  \item Auger IE and Lawrence CE. Algorithms for the optimal
-    identification of segment neighborhoods. Bull Math Biol 51:39–54
-    (1989).
-  \item G Rigaill.  A pruned dynamic programming algorithm to recover
-    the best segmentations with 1 to kmax change-points. Journal de la
-    Société Française de la Statistique, 156(4), 2015. 
-  \item \textbf{Hocking TD}, Boeva V, Rigaill G, Schleiermacher G,
-    Janoueix-Lerosey I, Delattre O, Richer W, Bourdeaut F, Suguro M,
-    Seto M, Bach F, Vert J-P. SegAnnDB: interactive Web-based genomic
-    segmentation. Bioinformatics (2014) 30 (11): 1539-1546.
-  \item \textbf{Hocking TD}, Goerner-Potvin P, Morin A, Shao X,
-    Pastinen T, Bourque G. Optimizing ChIP-seq peak detectors using
-    visual labels and supervised machine learning. Bioinformatics
-    (2017) 33 (4): 491-499.
-  \item Jewell S, \textbf{Hocking TD}, Fearnhead P, Witten D. Fast Nonconvex
-    Deconvolution of Calcium Imaging Data. Biostatistics (2019).
-  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A
-    Graph-Constrained Changepoint Learning Approach for Automatic
-    QRS-Complex Detection. Asilomar Conference on Signals, Systems,
-    and Computers (2020).
-  \item \textbf{Hocking TD}, Rigaill G, Fearnhead P, Bourque G. Constrained
-    Dynamic Programming and Supervised Penalty Learning Algorithms for
-    Peak Detection in Genomic Data. Journal of Machine Learning
-    Research 21(87):1--40, 2020.
-  \item Runge V, \textbf{Hocking TD}, Romano G, Afghah F, Fearnhead P, Rigaill
-    G. gfpop: an R Package for Univariate Graph-Constrained
-    Change-point Detection. Journal of Statistical
-    Software 106(6) (2023).
-  \end{itemize}
-\end{frame}
-
-\section{4. Optimal changepoints subject to label constraints}
+\section{3. Optimal changepoints subject to label constraints}
 
 \begin{frame}
   \frametitle{Learning a complex graph using labels}
@@ -374,7 +656,7 @@ $$
 
 \begin{frame}
   \frametitle{Label constraints and directional constraints}
-  Stenberg and Hocking, in progress.
+   Kaufman \emph{et al.}, Journal of Computational and Graphical Statistics 33(4) (2024).
 
   \includegraphics[width=\linewidth]{FLOPART-example}
 
@@ -384,22 +666,6 @@ $$
   \item Proposed FLOPART model (top) consistent with labels, and
     interpretable in terms of up changes to peaks and down changes to
     background noise.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{References}
-  \scriptsize
-  \begin{itemize}
-  \item \textbf{Hocking TD}, Rigaill G. SegAnnot: an R package for
-    fast segmentation of annotated piecewise constant signals,
-    Pre-print hal-00759129.
-  \item \textbf{Hocking TD}, Srivastava A. Labeled Optimal
-    Partitioning. Computational Statistics 38 (2023).
-  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A Greedy Graph
-    Search Algorithm Based on Changepoint Analysis for Automatic
-    QRS-Complex Detection. Computers in Biology and Medicine 130
-    (2021).
   \end{itemize}
 \end{frame}
 
@@ -506,6 +772,62 @@ In practice $S$ is often unknown --- what value should we use?
   \end{itemize}
 \end{frame}
 
+\section{Summary and Discussion}
+
+\begin{frame}[fragile]
+  \frametitle{Summary and Discussion}
+
+  \begin{itemize}
+  \item Optimal changepoint detection in $n$ data is a non-convex
+    problem, na\" ively a $O(n^S)$ computation for $S$ segments.
+  \item Recent algorithms can compute a globally optimal changepoint
+    model much faster, $O(n\log n)$.
+  \item Directional constraint graphs specified using domain prior
+    knowledge, or learned using expert labels.
+  \item Expert labels can also be used as optimization constraints, to
+    ensure that predicted changepoints are consistent.
+  \item Number of changes can be predicted with new learning
+    algorithms, including ROC curve optimization.
+  \item Let's collaborate! toby.hocking@nau.edu
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{References}
+  \scriptsize
+  \begin{itemize}
+  \item Auger IE and Lawrence CE. Algorithms for the optimal
+    identification of segment neighborhoods. Bull Math Biol 51:39–54
+    (1989).
+  \item G Rigaill.  A pruned dynamic programming algorithm to recover
+    the best segmentations with 1 to kmax change-points. Journal de la
+    Société Française de la Statistique, 156(4), 2015. 
+  \item \textbf{Hocking TD}, Boeva V, Rigaill G, Schleiermacher G,
+    Janoueix-Lerosey I, Delattre O, Richer W, Bourdeaut F, Suguro M,
+    Seto M, Bach F, Vert J-P. SegAnnDB: interactive Web-based genomic
+    segmentation. Bioinformatics (2014) 30 (11): 1539-1546.
+  \item \textbf{Hocking TD}, Goerner-Potvin P, Morin A, Shao X,
+    Pastinen T, Bourque G. Optimizing ChIP-seq peak detectors using
+    visual labels and supervised machine learning. Bioinformatics
+    (2017) 33 (4): 491-499.
+  \item Jewell S, \textbf{Hocking TD}, Fearnhead P, Witten D. Fast Nonconvex
+    Deconvolution of Calcium Imaging Data. Biostatistics (2019).
+  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A
+    Graph-Constrained Changepoint Learning Approach for Automatic
+    QRS-Complex Detection. Asilomar Conference on Signals, Systems,
+    and Computers (2020).
+  \item \textbf{Hocking TD}, Rigaill G, Fearnhead P, Bourque G. Constrained
+    Dynamic Programming and Supervised Penalty Learning Algorithms for
+    Peak Detection in Genomic Data. Journal of Machine Learning
+    Research 21(87):1--40, 2020.
+  \item Runge V, \textbf{Hocking TD}, Romano G, Afghah F, Fearnhead P, Rigaill
+    G. gfpop: an R Package for Univariate Graph-Constrained
+    Change-point Detection. Journal of Statistical
+    Software 106(6) (2023).
+  \end{itemize}
+\end{frame}
+
 \begin{frame}
   \frametitle{References}
   \scriptsize
@@ -527,25 +849,20 @@ In practice $S$ is often unknown --- what value should we use?
   \end{itemize}
 \end{frame}
 
-\section{Summary and Discussion}
-
-\begin{frame}[fragile]
-  \frametitle{Summary and Discussion}
-
+\begin{frame}
+  \frametitle{References}
+  \scriptsize
   \begin{itemize}
-  \item Optimal changepoint detection in $n$ data is a non-convex
-    problem, na\" ively a $O(n^S)$ computation for $S$ segments.
-  \item Recent algorithms can compute a globally optimal changepoint
-    model much faster, $O(n\log n)$.
-  \item Directional constraint graphs specified using domain prior
-    knowledge, or learned using expert labels.
-  \item Expert labels can also be used as optimization constraints, to
-    ensure that predicted changepoints are consistent.
-  \item Number of changes can be predicted with new learning
-    algorithms, including ROC curve optimization.
-  \item Let's collaborate! toby.hocking@nau.edu
+  \item \textbf{Hocking TD}, Rigaill G. SegAnnot: an R package for
+    fast segmentation of annotated piecewise constant signals,
+    Pre-print hal-00759129.
+  \item \textbf{Hocking TD}, Srivastava A. Labeled Optimal
+    Partitioning. Computational Statistics 38 (2023).
+  \item Fotoohinasab A, \textbf{Hocking TD}, Afghah F. A Greedy Graph
+    Search Algorithm Based on Changepoint Analysis for Automatic
+    QRS-Complex Detection. Computers in Biology and Medicine 130
+    (2021).
   \end{itemize}
-  
 \end{frame}
 
 \end{document}

@@ -136,35 +136,6 @@ $$
 \end{frame}
 
 \begin{frame}
-  \frametitle{Constrained problem, Lasso heuristic}
-  \textbf{Constrained} optimal change-point problem:
-$$
-\min_{
-  \mathbf \mu\in\RR^{n}
-}
-\underbrace{
-  \sum_{i=1}^{n} \ell( \mu_i,  z_i)
-}_{
-  \text{Loss (data-fitting)}
-}
-\text{ subject to }
-\underbrace{
-  \sum_{i=2}^n I[\mu_{i-1}\neq \mu_i] \leq S.
-}_{
-  \text{Number of change-points (regularization)}
-}
-$$
-\begin{itemize}
-\item Hyper-parameter is number of segments $S$.
-\item Indicator function $I[\cdot ]\in\{0,1\}$ is non-convex.
-\item Gradient descent yields local min.
-\item Analog with best subset regression: hyper-parameter is number of variables (combinatorial search, relax to Lasso).
-\item Fused Lasso for change-points (Tibshirani \emph{et al.}, JRSSB 2005).
-\item Lasso selects too many variables (false positive change-points).
-\end{itemize}
-\end{frame}
-
-\begin{frame}
   \frametitle{Constrained problem, classic dynamic programming solution}
   \textbf{Constrained} optimal change-point problem:
 $$
@@ -207,6 +178,36 @@ $$
 \item User can not directly specify number of segments $S$.
 \item Output one optimal change-point model (not all in $1,\dots,S$).
 \item Quadratic time is still too slow for large data $n$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized problem, Fused Lasso heuristic}
+  \textbf{Penalized relaxed} change-point problem (fused lasso):
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{
+  \sum_{i=1}^{n} \ell( \mu_i,  z_i)
+}_{
+  \text{Loss (data-fitting)}
+}
++
+\underbrace{
+  \lambda  
+  \alert{\sum_{i=2}^n |\mu_{i-1}-\mu_{i}|}
+}_{
+  \text{Absolute differences (regularization)}
+}
+$$
+\begin{itemize}
+\item Hyper-parameter is non-negative penalty $\lambda\geq 0$.
+\item Indicator function $I[\cdot ]\in\{0,1\}$ is non-convex.
+\item Substitute absolute difference penalty: \alert{$\sum |\cdot|$}.
+% \item Analog with best subset regression: hyper-parameter is number of variables (combinatorial search, relax to Lasso).
+\item Fused Lasso for change-points (Tibshirani \emph{et al.}, JRSSB 2005).
+\item Lasso selects too many variables (false positive change-points).
 \end{itemize}
 \end{frame}
 

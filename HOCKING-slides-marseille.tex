@@ -30,11 +30,6 @@
 \newcommand{\NN}{\mathbb N}
 \newcommand{\z}{$z = 2, 4, 3, 5, 1$} 
 
-\newcommand{\algo}[1]{\textcolor{#1}{#1}}
-\definecolor{PDPA}{HTML}{66C2A5}
-\definecolor{CDPA}{HTML}{FC8D62}
-\definecolor{GPDPA}{HTML}{4D4D4D}
-
 % Set transparency of non-highlighted sections in the table of
 % contents slide.
 \setbeamertemplate{section in toc shaded}[default][100]
@@ -66,6 +61,35 @@
 \date{}
 
 \maketitle
+
+\begin{frame}
+  \frametitle{Why are change-point algorithms so interesting?}
+
+  In statistics, we have data, and we want good parameter estimates:
+  \begin{itemize}
+  \item Linear model coefficients
+  \item Neural networks weights
+  \item Change-points
+  \end{itemize}
+
+  \begin{tabular}{rccc}
+    \hline
+    & Linear & Neural Net & Change-point \\
+    \hline 
+    Problem:  & Convex & Non-convex & Non-convex \\
+    Algorithm: & Gradient & Gradient & Dynamic programming \\
+    Optimality: & Global & Local & Global \\
+    \hline
+  \end{tabular}
+
+  \begin{itemize}
+  \item Change-point detection is a non-convex problem
+  \item with efficient dynamic programming algorithms
+  \item that return the globally optimal model parameters!
+  \end{itemize}
+
+  This talk: recent computational advances.
+\end{frame}
 
 \section{1. Drawbacks of classic algorithms} 
 \begin{frame}
@@ -111,7 +135,7 @@ $$
 $$
 \begin{itemize}
   \item Algorithm inputs $n$ data $z_1, \dots, z_n$ and \# of segments $S$.
-  \item Loss function $\ell$ measures fit of means $u_s$ to data $z_i$.
+  \item Loss function $\ell$ measures fit of means $u_s$ to data $z_i$ (Gaussian, Poisson, exponential, $\dots$).
   \item Goal is to compute best $S-1$ changepoints
     $t_1 < \cdots < t_{S-1}$ and $S$ segment parameters $u_1,\dots,u_S$.
   \item Non-convex optimization problem, na\" ively $O(n^S)$ time.
@@ -144,6 +168,22 @@ $$
 }
 \underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}}\text{ subject to }\underbrace{\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i] \leq S.}_{\text{Number of change-points (regularization)}}
 $$
+
+\includegraphics[width=\textwidth]{SN-demo}
+
+\url{https://tdhock.github.io/SN-demo/}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Constrained problem, classic dynamic programming solution}
+  \textbf{Constrained} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}}\text{ subject to }\underbrace{\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i] \leq S.}_{\text{Number of change-points (regularization)}}
+$$
 \begin{itemize}
 \item Auger and Lawrence, Algorithms for the optimal identification of
   \textbf{segment neighborhoods}, Bull Math Biol (1989).
@@ -157,6 +197,21 @@ $$
 \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Penalized problem, classic dynamic programming solution}
+  \textbf{Penalized} optimal change-point problem:
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+$$
+
+\includegraphics[width=\textwidth]{OP-demo} 
+
+\url{https://tdhock.github.io/OP-demo/}
+
+\end{frame}
 
 \begin{frame}
   \frametitle{Penalized problem, classic dynamic programming solution}
@@ -201,14 +256,59 @@ $$
   \text{Absolute differences (regularization)}
 }
 $$
+
+\includegraphics[width=\textwidth]{FL-demo}
+
+\url{https://tdhock.github.io/FL-demo/}
+
+library(flsa) in R.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalized problem, Fused Lasso heuristic}
+  \textbf{Penalized relaxed} change-point problem (fused lasso):
+$$
+\min_{
+  \mathbf \mu\in\RR^{n}
+}
+\underbrace{
+  \sum_{i=1}^{n} \ell( \mu_i,  z_i)
+}_{
+  \text{Loss (data-fitting)}
+}
++
+\underbrace{
+  \lambda  
+  \alert{\sum_{i=2}^n |\mu_{i-1}-\mu_{i}|}
+}_{
+  \text{Absolute differences (regularization)}
+}
+$$
 \begin{itemize}
 \item Hyper-parameter is non-negative penalty $\lambda\geq 0$.
 \item Indicator function $I[\cdot ]\in\{0,1\}$ is non-convex.
 \item Substitute absolute difference penalty: \alert{$\sum |\cdot|$}.
 % \item Analog with best subset regression: hyper-parameter is number of variables (combinatorial search, relax to Lasso).
 \item Fused Lasso for change-points (Tibshirani \emph{et al.}, JRSSB 2005).
+\item Gradient-based linear time algorithm.
 \item Lasso selects too many variables (false positive change-points).
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Summary of classic algorithms}
+  Some fast heuristics:
+  \begin{itemize}
+  \item Binary segmentation (Scott and Knott, 1974).
+  \item Hidden Markov Models (Rabiner, 1989).
+  \item Fused Lasso (Tibshirani, 2005).
+  \end{itemize}
+  Quadratic time optimal algorithms:
+  \begin{itemize}
+  \item Segment neighborhood (Auger and Lawrence, 1989).
+  \item Optimal partitioning (Jackson, \emph{et al.}, 2005).
+  \end{itemize}
 \end{frame}
 
 \section{2. Linear time optimal algorithms with pruning }
@@ -225,18 +325,31 @@ $$
 \begin{itemize}
 \item Recursively compute $C_{1}, C_2,\dots, C_{n}$.
 \item Classic DP considers all previous change-points.
-\item At time $n$, consider $C_1,\dots,C_{n-1}$.
+\item At time $n$, considers all of $C_1,\dots,C_{n-1}$.
 \item Pruned Exact Linear Time algo: Killick, \emph{et al.}, JASA (2012).
-\item At time $n$ consider only a subset of $C_1,\dots,C_{n-1}$.
+\item At time $n$, TODO subset of candidates $C_1,\dots,C_{n-1}$.
 \item Easy to implement, with only 1 additional line of code!
 \item Same output: one optimal change-point model.
 \item Time complexity: best $O(n)$, worst $O(n^2)$.
+\item library(changepoint) in R.
 \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{Simulated data with constant and linear changes}
   \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes.png}
+
+  \begin{itemize}
+  \item Constant changes: always 4 segments (for any data size $n$).
+  \item Linear: change every 10 data.
+  \end{itemize}
+  
+  \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Simulated data with constant and linear changes}
+  \includegraphics[width=\textwidth]{figure-sim-linear-constant-changes-model.png}
 
   \begin{itemize}
   \item Constant changes: always 4 segments (for any data size $n$).
@@ -261,13 +374,13 @@ $$
 
 \begin{frame}
   \frametitle{Penalized problem, PELT algorithm}
-  \textbf{Penalized} optimal change-point problem:
-$$
-\min_{
-  \mathbf \mu\in\RR^{n}
-}
-\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
-$$
+%   \textbf{Penalized} optimal change-point problem:
+% $$
+% \min_{
+%   \mathbf \mu\in\RR^{n}
+% }
+% \underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+% $$
 \begin{tabular}{cccc}
   \# changes in data & Algorithm & \# candidates per data & Overall time \\
   \hline
@@ -302,6 +415,7 @@ $$
 \item Same output: one optimal change-point model.
 \item Same time as PELT in theory: best $O(n)$, worst $O(n^2)$.
 \item But much faster in practice! (never quadratic)
+\item library(fpopw) in R.
 \end{itemize}
 \end{frame}
 
@@ -320,13 +434,13 @@ $$
  
 \begin{frame}
   \frametitle{Penalized problem, FPOP algorithm}
-  \textbf{Penalized} optimal change-point problem:
-$$
-\min_{
-  \mathbf \mu\in\RR^{n}
-}
-\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
-$$
+%   \textbf{Penalized} optimal change-point problem:
+% $$
+% \min_{
+%   \mathbf \mu\in\RR^{n}
+% }
+% \underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
+% $$
 \begin{tabular}{cccc}
   \# changes in data & Algorithm & \# candidates per data & Overall time \\
   \hline
@@ -346,29 +460,9 @@ $$
 \end{frame}
 
 \begin{frame}
-  \frametitle{Penalized problem, FPOP algorithm}
-  \textbf{Penalized} optimal change-point problem:
-$$
-\min_{
-  \mathbf \mu\in\RR^{n}
-}
-\underbrace{\sum_{i=1}^{n} \ell( \mu_i,  z_i)}_{\text{Loss (data-fitting)}} + \underbrace{\lambda\sum_{i=2}^n I[\mu_{i-1}\neq \mu_i].}_{\text{Number of change-points (regularization)}}
-$$
-\begin{itemize}
-\item FPOP algo: Maidstone, \emph{et al.}, Stat. and Comp. (2017).
-\item Let $C_n(m)$ be the best cost with mean $m$ at $n$ data.
-\item Recursively compute functions $C_{1}(m), C_2(m),\dots, C_{n}(m)$.
-\item \textbf{Functional pruning} considers a small subset of candidates.
-\item Same output: one optimal change-point model.
-\item Time complexity best $O(n)$, worst $O(n^2)$.
-\end{itemize}
-\end{frame}
-
-\begin{frame}
   \frametitle{Penalized problem, FPOP extensions}
 Functional pruning can handle:
 \begin{itemize}
-\item Inequality constraints between segment means (next section).
 \item Robust loss functions: Fearnhead and Rigaill,
   %Changepoint detection in the presence of outliers,
   JASA (2019).
@@ -376,6 +470,7 @@ Functional pruning can handle:
   %Detecting Abrupt Changes in the Presence of Local Fluctuations and Autocorrelated Noise,
   JASA (2021).
 \item Storage on disk: Hocking \emph{et al.}, JSS (2022).
+\item Inequality/graph constraints: Runge \emph{et al.}, JSS 2023.
 \item Multi-variate time series: Pishchagina \emph{et al.},
   %Geometric-Based Pruning Rules for Change Point Detection in Multiple Independent Time Series,
   Computo (2024).
@@ -384,7 +479,7 @@ Functional pruning can handle:
 But:
 \begin{itemize}
 \item Difficult to implement (100s of lines of C++ code).
-\item Not as fast in high dimensional data/models.
+\item Especially difficult for high dimensional data/models.
 \end{itemize}
 Is it possible to go faster?
 \end{frame}
@@ -402,12 +497,13 @@ $$
 \item Truong and Runge, An Efficient Algorithm for Exact
   Segmentation of Large Compositional and Categorical Time Series,
   Stat (2024).
-\item DUST algo: DUality Sample Test.
+\item DUST algo: DUality Simple Test.
 \item Combines ideas from PELT and FPOP algos.
 \item Solve a Langrange dual problem to prune change-points.
 \item Easier to code than FPOP.
 \item Same time as FPOP in theory: best $O(n)$, worst $O(n^2)$.
 \item But much faster in practice! (constant factors)
+\item library(dust) in R.
 \end{itemize}
 \end{frame}
 
@@ -427,8 +523,7 @@ $$
   \includegraphics[width=\textwidth]{figure-pred-candidates-O.png}
  
   \begin{itemize}
-  \item Data sizes varied from 100 to 10,000,000.
-  \item Slope on log-log plot indicates asymptotic time complexity.
+  \item Slope on log-log plot indicates asymptotic complexity class.
   \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
@@ -442,6 +537,7 @@ $$
   \item N= data size computable in time limit of 1 second.
   \item FPOP 10x faster than PELT.
   \item DUST 10x faster than FPOP.
+  \item library(atime) in R for asymptotic analysis.
   \end{itemize}
 
   \url{https://tdhock.github.io/blog/2025/PELT-vs-fpopw/}
@@ -477,274 +573,10 @@ $$
 \end{itemize}
 \end{frame}
 
-\section{3. Constraints between adjacent segment means}
-
-\begin{frame}
-  \frametitle{Optimization constraints defined using a graph}
-  Runge \emph{et al.}, Journal of Statistical Software 2023 (graph figures).
-
-  \includegraphics[width=0.7\textwidth]{gfpop-up-down}
-
-  \begin{itemize}
-  \item Purple Dw/Up nodes represent hidden states.
-  \item \#/$\emptyset$ nodes constrain start/end state.
-  \item Edges represent possible state transitions.
-  \item \texttt{gfpop} R package with C++ code computes optimal
-    changepoints for user-defined constraint graphs.
-  \end{itemize}
-
-\end{frame}
-
-
-% \begin{frame}
-%   \frametitle{Constrained optimization algorithm speed}
-%   Hocking {\it et al.}, Journal of Machine Learning Research 2020. 
-% \vskip -0.5cm
-% \begin{align*}
-% \min_{\substack{
-%   \mathbf u\in\RR^{S}
-% \\
-%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
-% }} & \ \
-%     \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
-% \\
-%       \text{subject to \hskip 0.8cm} &\ \ 
-% \alert{ u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\} },
-%   \nonumber\\
-%   &\ \ 
-% \alert{ u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\} }.
-%   \nonumber
-% \end{align*}
-
-% \alert{Constraints used to force change up to peak state, then change
-%   down to background noise state.}
-
-% \includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
-
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{Isotonic regression (all up changes, constant segments)}
-%   \includegraphics[width=\textwidth]{gfpop-isotonic}
-% \end{frame}
-
-\begin{frame}
-  \frametitle{All up changes, exponential decaying segments}
-  \includegraphics[width=0.5\textwidth]{gfpop-decay}
-
-  Jewell \emph{et al.}, Biostatistics 2019.
-
-  \includegraphics[width=0.7\textwidth]{intro-neuroscience} 
-
-\end{frame}
-
-% \begin{frame}
-%   \frametitle{Many changes up to and down from each spike}
-%   \includegraphics[width=\textwidth]{gfpop-free-up-down}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{Relevant changes (any direction, large in absolute value)}
-%   \includegraphics[width=\textwidth]{gfpop-absolute}
-% \end{frame}
-
-\begin{frame}
-  \frametitle{Complex graph for electrocardiogram data}
-  \includegraphics[width=0.5\textwidth]{gfpop-ecg-graph}
-  \includegraphics[width=\textwidth]{gfpop-ecg-data}
-
-  Fotoohinasab \emph{et al.}, Asilomar conference 2020.
-
-\end{frame}
-
-\section{4. Optimal changepoints subject to label constraints}
-
-\begin{frame}
-  \frametitle{Learning a complex graph using labeled regions}
-\parbox{0.6\textwidth}{
-  \includegraphics[width=\linewidth]{gfpop-ecg-iterations}
-} \parbox{0.35\textwidth}{
-  \begin{itemize}
-  \item  Fotoohinasab \emph{et al.}, 2021.
-\item Simple initial graph is iteratively edited (red) to agree with expert
- labeled regions (orange rectangles).
-\item Easier for expert to provide labels than graph.
-  \end{itemize}
- }
-\end{frame}
-
-\begin{frame}
-  \frametitle{Learning penalty using labeled regions}
-\parbox{0.6\textwidth}{
-  \includegraphics[width=\linewidth]{supervised-change-label-error}
-} \parbox{0.35\textwidth}{
-  \begin{itemize}
-  \item Figure: Nguyen and Hocking, arXiv:2505.07413.
-  \item fp=false positive (too many changes).
-  \item fn=false negative (too few changes).
-  \item Try different $\lambda$ values until we find a model with no
-    errors.
-  \end{itemize}
- }
-\end{frame}
-
-\begin{frame}
-  \frametitle{What if no models agree with expert labels?}
-  Hocking and Rigaill, Pre-print hal-00759129.
-
-  \includegraphics[width=0.8\linewidth]{SegAnnot-motivation}
-
-  \begin{itemize}
-  \item Expert wants: one changepoint in each label (red rectangle).
-  \item No model is consistent with all three labels.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Using expert labels as optimization constraints}
-  Hocking and Srivastava, Computational Statistics 38 (2023).
-
-  \includegraphics[width=\linewidth]{LOPART-notation}
-
-  \begin{itemize}
-  \item Previous OPART model (blue) ignores labels (two errors).
-  \item Main idea: add optimization constraints to ensure that there
-    is the right number of changepoints predicted in each label.
-  \item Proposed LOPART model (black) consistent with labels.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Label constraints and directional constraints}
-   Kaufman \emph{et al.}, Journal of Computational and Graphical Statistics 33(4) (2024).
-
-  \includegraphics[width=\linewidth]{FLOPART-example}
-
-  \begin{itemize}
-  \item Previous PeakSegOptimal algorithm (bottom) ignores labels (two
-    errors).
-  \item Proposed FLOPART model (top) consistent with labels, and
-    interpretable in terms of up changes to peaks and down changes to
-    background noise.
-  \end{itemize}
-\end{frame}
-
-\section{5. Learning to predict the number of changepoints} 
+\section{3. Computing constrained models using penalized solver} 
  
 \begin{frame}
-  \frametitle{How to predict the number of changes?}
-
-  We assumed that the number of segments $S$ is provided as an input
-  parameter to our optimization algorithm.
-
-\begin{align*}
-\min_{\substack{
-  \mathbf u\in\RR^{S}
-\\
-   0=t_0<t_1<\cdots<t_{S-1}<t_S=n
-}} & \ \
-    \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
-  \nonumber
-\end{align*}
-
-In practice $S$ is often unknown --- what value should we use?
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Learning to predict number of changes similar to SVM}
-  Hocking \emph{et al.}, Int'l Conference on Machine Learning 2013.
-
-  \includegraphics[width=0.8\linewidth]{icml13-hard-margin}
-  \begin{itemize}
-  \item Train on several data sequences with labels (dots).
-  \item Want to compute function between white and black dots.
-  \item SVM margin is multi-dimensional (diagonal).
-  \item Here margin to maximize is one-dimensional (horizontal).
-  \item Learned function predicts number of changepoints/segments.
-  \end{itemize}
-\end{frame}
-
-% \begin{frame}
-%   \frametitle{Test accuracy/AUC in five-fold cross-validation}
-  
-%   Hocking and Killick, useR2017 conference tutorial.
-
-%   \includegraphics[width=0.8\linewidth]{supervised-test-metrics}
-
-%   Learned linear functions for predicting the number of changepoints
-%   (IntervalRegressionCV, survreg) are much more accurate than constant
-%   baseline and unsupervised BIC/SIC.
-  
-% \end{frame}
-
-\begin{frame}
-  \frametitle{Decision tree learns non-linear function of inputs}
-  
-  Drouin \emph{et al.}, Neural Information Processing Systems 2017.
-
-  \includegraphics[width=\linewidth]{mmit-functions}
-  \begin{itemize}
-  \item Generalization of classical CART regression tree learning algorithm.
-  \item Can learn non-linear functions of inputs.
-  \item More recently we implemented a similar idea in xgboost,
-    Barnwal \emph{et al.}, Journal of Computational and Graphical Statistics 31(4) (2022).
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Penalty prediction using recurrent neural network}
-  
-  \includegraphics[width=\linewidth]{penalty-pred-RNN}
-  \begin{itemize}
-  \item Nguyen and Hocking, arXiv:2505.07413.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Is maximizing Area Under the ROC Curve desirable?}
-  
-  \parbox{2in}{In binary classification the ROC curve is monotonic.} \parbox{2in}{
-  \includegraphics[height=1in]{figure-more-than-one-less-auc} 
-}
-
-\parbox{2in}{In changepoint detection it can have loops.} \parbox{2in}{
-  \includegraphics[height=1in]{figure-more-than-one-more-auc}
-}
-
-  \parbox{2in}{We propose instead to minimize the AUM = Area Under
-    the Minimum of false positives and false negatives, as a function of prediction threshold.} \parbox{2in}{
-  \includegraphics[height=1in]{figure-more-than-one-more-aum}
-}
-
-  % \includegraphics[width=0.4\linewidth]{figure-more-than-one-less-auc} 
-  % \includegraphics[width=0.4\linewidth]{figure-more-than-one-more-auc}
-
-  % \includegraphics[width=0.7\linewidth]{figure-more-than-one-more-aum}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{AUM gradient descent algorithm optimizes AUC}
-  
-  Hillman and Hocking, in progress.
-
-  \includegraphics[width=0.49\linewidth]{figure-aum-optimized-iterations-emph}
-  \includegraphics[width=0.49\linewidth]{figure-aum-train-pred-only} 
-
-  \begin{itemize}
-  \item Initial predictions: minimum label errors.
-  \item ROC curves become more regular/monotonic after optimization,
-    but label error increases.
-  \item Trade-off between AUC and label error optimization that does
-    not exist in binary classification.
-  \end{itemize}
-\end{frame}
-
-\section{6. Computing range of models using penalized solver} 
- 
-\begin{frame}
-  \frametitle{Computing various solutions using penalized solver}
+  \frametitle{Computing one constrained model using penalized solver}
 
   How to compute the best model with $P^*$ change-points? 
 
@@ -757,6 +589,7 @@ In practice $S$ is often unknown --- what value should we use?
   \item Run \alert{constrained} solver to get all model sizes from 0 to 100.
   \item $O(\alert{P^*} n\log n)$ time---fast in $n$.
   \item Slow in $P^*$: we do not want model sizes 0 to 99.
+  \item library(fpopw) in R.
   \end{itemize}
 
   Sequential search algo: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
@@ -765,10 +598,11 @@ In practice $S$ is often unknown --- what value should we use?
     penalty $\lambda\geq 0$ (but $\lambda$ that yields $P^*$ is
     unknown).
   \item Run \alert{penalized} solver for an special sequence of $\lambda$ values.
-  \item $O(\alert{\log P^*} n\log n)$ time---fast in $n$ and $P^*$!
+  \item $O(\alert{\log P^*} n\log n)$ time---fast in $n$ and $P^*$! (empirically)
+  \item library(PeakSegDisk) in R.
   \end{itemize}
 \end{frame}
-
+ 
 \begin{frame}
   \frametitle{Penalized (OP) is faster than constrained (SN)}
   
@@ -794,6 +628,7 @@ In practice $S$ is often unknown --- what value should we use?
   \item Example: want all models with $\lambda\in[0.1, \overline 10.5]$.
   \item CROPS: Change-points for a Range Of PenaltieS.
   \item Haynes, \emph{et al.} Journal of Computational and Graphical Statistics, 26(1), 134-143 (2017).
+  \item library(changepoint) in R.
   \end{itemize}
   
   How to compute all models with number of change-points $P\in[\underline P, \overline P]$?
@@ -801,6 +636,7 @@ In practice $S$ is often unknown --- what value should we use?
   \item Example: want all models from 50 to 60 change-points.
   \item CROCS: Change-points for a Range Of ComplexitieS.
   \item Liehrmann \emph{et al.}, BMC Bioinformatics 22(323) (2021).
+  \item library(CROCS) in R.
   \end{itemize}
   Both exploit the piecewise linear solution path to obtain an efficient algorithm, linear time in the number of models!
   % \begin{itemize}
@@ -810,9 +646,8 @@ In practice $S$ is often unknown --- what value should we use?
   % 60 change-points), then $O(M + \log \overline P)$ DP
   % iterations---fast for large model sizes $\overline P$ (no need to
   % compute sizes 0 to 49).
-  
 \end{frame}
-
+ 
 \section{Summary and Discussion}
 
 \begin{frame}[fragile]
@@ -821,17 +656,20 @@ In practice $S$ is often unknown --- what value should we use?
   \begin{itemize}
   \item Optimal changepoint detection in $n$ data is a non-convex
     problem, na\" ively a $O(n^S)$ computation for $S$ segments.
-  \item Recent algorithms can compute a globally optimal changepoint
-    model much faster, $O(n\log n)$.
-  \item Directional constraint graphs specified using domain prior
-    knowledge, or learned using expert labels.
-  \item Expert labels can also be used as optimization constraints, to
-    ensure that predicted changepoints are consistent.
-  \item Number of changes can be predicted with new learning
-    algorithms, including ROC curve optimization.
-  \item Let's collaborate! toby.hocking@nau.edu
+  \item Pruning algorithms compute a globally optimal change-point
+    model much faster, $O(n\log n)$ or even $O(n)$.
   \end{itemize}
-  
+  Future work:   
+  \begin{itemize}
+  \item Fast pruning algorithms for piecewise loss
+    functions (L1 etc).
+  \item Proving best/worst case time complexity of sequential search
+    algorithms?
+  \end{itemize}
+  Contact: toby.dylan.hocking@usherbrooke.ca
+
+  \centering
+\includegraphics[height=3cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}  
 \end{frame}
 
 \begin{frame}
@@ -905,5 +743,250 @@ In practice $S$ is often unknown --- what value should we use?
     (2021).
   \end{itemize}
 \end{frame}
+
+%\section{Constraints between adjacent segment means}
+
+\begin{frame}
+  \frametitle{Optimization constraints defined using a graph}
+  Runge \emph{et al.}, Journal of Statistical Software 2023.
+
+  \includegraphics[width=0.7\textwidth]{gfpop-up-down}
+
+  \begin{itemize}
+  \item Purple Dw/Up nodes represent hidden states.
+  \item \#/$\emptyset$ nodes constrain start/end state.
+  \item Edges represent possible state transitions.
+  \item library(gfpop) in R computes optimal
+    change-points for user-defined constraint graphs.
+  \end{itemize}
+
+\end{frame}
+
+
+% \begin{frame}
+%   \frametitle{Constrained optimization algorithm speed}
+%   Hocking {\it et al.}, Journal of Machine Learning Research 2020. 
+% \vskip -0.5cm
+% \begin{align*}
+% \min_{\substack{
+%   \mathbf u\in\RR^{S}
+% \\
+%    0=t_0<t_1<\cdots<t_{S-1}<t_S=n
+% }} & \ \
+%     \sum_{s=1}^S\  \sum_{i=t_{s-1}+1}^{t_s} \ell( u_s,  z_i) 
+% \\
+%       \text{subject to \hskip 0.8cm} &\ \ 
+% \alert{ u_{s-1} \leq u_s\ \forall s\in\{2,4,\dots\} },
+%   \nonumber\\
+%   &\ \ 
+% \alert{ u_{s-1} \geq u_s\ \forall s\in\{3,5,\dots\} }.
+%   \nonumber
+% \end{align*}
+
+% \alert{Constraints used to force change up to peak state, then change
+%   down to background noise state.}
+
+% \includegraphics[width=\textwidth]{screenshot-GPDPA-intervals}
+
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Isotonic regression (all up changes, constant segments)}
+%   \includegraphics[width=\textwidth]{gfpop-isotonic}
+% \end{frame}
+
+\begin{frame}
+  \frametitle{All up changes, exponential decaying segments}
+  \includegraphics[width=0.5\textwidth]{gfpop-decay}
+
+  Jewell \emph{et al.}, Biostatistics 2019.
+
+  \includegraphics[width=0.7\textwidth]{intro-neuroscience}
+
+  library(FastLZeroSpikeInference) in R.
+
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Many changes up to and down from each spike}
+%   \includegraphics[width=\textwidth]{gfpop-free-up-down}
+% \end{frame}
+
+% \begin{frame}
+%   \frametitle{Relevant changes (any direction, large in absolute value)}
+%   \includegraphics[width=\textwidth]{gfpop-absolute}
+% \end{frame}
+
+\begin{frame}
+  \frametitle{Complex graph for electrocardiogram data}
+  \includegraphics[width=0.5\textwidth]{gfpop-ecg-graph}
+  \includegraphics[width=\textwidth]{gfpop-ecg-data}
+
+  Fotoohinasab \emph{et al.}, Asilomar conference 2020.
+
+\end{frame}
+
+%\section{3. Optimal change-points subject to label constraints} 
+%\section{3. Optimal change-points subject to label constraints}
+
+\begin{frame}
+  \frametitle{Fitting change-points to labels from an expert}
+\parbox{0.6\textwidth}{
+  \includegraphics[width=\linewidth]{supervised-change-label-error}
+} \parbox{0.35\textwidth}{
+  \begin{itemize}
+  \item Figure: Nguyen and Hocking, arXiv:2505.07413.
+  \item fp=false positive (too many changes).
+  \item fn=false negative (too few changes).
+  \item Try different $\lambda$ values until we find a model with no
+    errors. 
+  \end{itemize}
+ }
+\end{frame}
+
+\begin{frame}
+  \frametitle{What if no models agree with expert labels?}
+  Hocking and Rigaill, Pre-print hal-00759129.
+
+  \includegraphics[width=0.8\linewidth]{SegAnnot-motivation}
+
+  \begin{itemize}
+  \item Expert wants: one changepoint in each label (red rectangle).
+  \item No model is consistent with all three labels.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Using expert labels as optimization constraints}
+  Hocking and Srivastava, Computational Statistics 38 (2023).
+
+  \includegraphics[width=\linewidth]{LOPART-notation}
+
+  \begin{itemize}
+  \item Previous OPART model (blue) ignores labels (two errors).
+  \item Main idea: add optimization constraints to ensure that there
+    is the right number of changepoints predicted in each label.
+  \item Proposed LOPART model (black) consistent with labels.
+  \item library(LOPART) in R.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Label constraints and directional constraints}
+   Kaufman \emph{et al.}, Journal of Computational and Graphical Statistics 33(4) (2024).
+
+  \includegraphics[width=\linewidth]{FLOPART-example}
+
+  \begin{itemize}
+  \item Previous PeakSegOptimal algorithm (bottom) ignores labels (two
+    errors).
+  \item Proposed FLOPART model (top) consistent with labels, and
+    interpretable in terms of up changes to peaks and down changes to
+    background noise.
+  \item library(FLOPART) in R.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Learning a complex graph using labeled regions}
+\parbox{0.6\textwidth}{
+  \includegraphics[width=\linewidth]{gfpop-ecg-iterations}
+} \parbox{0.35\textwidth}{
+  \begin{itemize}
+  \item  Fotoohinasab \emph{et al.}, 2021.
+\item Simple initial graph is iteratively edited (red) to agree with expert
+ labeled regions (orange rectangles).
+\item Easier for expert to provide labels than graph.
+  \end{itemize}
+ }
+\end{frame}
+
+% \section{4. Predicting the penalty}
+%\section{4. Predicting the penalty using labels}
+ 
+\begin{frame}
+  \frametitle{How to predict the number of changes?}
+
+  TODO figure.
+
+  In practice the penalty $\lambda$ is unknown --- what value should we use?
+
+\begin{itemize}
+\item $z = z_1,\dots,z_n$ is the data sequence to segment.
+\item Let $x = \phi(z)$ be a feature vector (fixed, not learned).
+\item Learn $f(x) = \log \lambda$, predicted penalty.
+\item Goal: minimize error with respect to labeled regions in test set.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Learning to predict number of changes similar to SVM}
+  Hocking \emph{et al.}, Int'l Conference on Machine Learning 2013.
+
+  \includegraphics[width=0.8\linewidth]{icml13-hard-margin}
+  \begin{itemize}
+  \item Train on several data sequences with labels (dots).
+  \item Want to compute function between white and black dots.
+  \item SVM margin is multi-dimensional (diagonal).
+  \item Here margin to maximize is one-dimensional (horizontal).
+  \item L1 regularized linear model, library(penaltyLearning) in R.
+  \end{itemize}
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Test accuracy/AUC in five-fold cross-validation}
+  
+%   Hocking and Killick, useR2017 conference tutorial.
+
+%   \includegraphics[width=0.8\linewidth]{supervised-test-metrics}
+
+%   Learned linear functions for predicting the number of changepoints
+%   (IntervalRegressionCV, survreg) are much more accurate than constant
+%   baseline and unsupervised BIC/SIC.
+  
+% \end{frame}
+
+\begin{frame}
+  \frametitle{Decision tree learns non-linear function of inputs}
+  
+  Drouin \emph{et al.}, Neural Information Processing Systems 2017.
+
+  \includegraphics[width=\linewidth]{mmit-functions}
+  \begin{itemize}
+  \item Generalization of classical CART regression tree learning algorithm.
+  \item Can learn non-linear functions of inputs.
+  \item More recently we implemented a similar idea in xgboost,
+    Barnwal \emph{et al.}, Journal of Computational and Graphical Statistics 31(4) (2022).
+  \item library(mmit) and library(xgboost) in R.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalty prediction using recurrent neural network}
+  
+  \includegraphics[width=\linewidth]{penalty-pred-RNN}
+  \begin{itemize}
+  \item Nguyen and Hocking, arXiv:2505.07413.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{AUM gradient descent algorithm optimizes AUC}
+  
+  Hillman and Hocking, \emph{Journal of Machine Learning Research} 2023.
+
+  \includegraphics[width=0.49\linewidth]{figure-aum-optimized-iterations-emph}
+  \includegraphics[width=0.49\linewidth]{figure-aum-train-pred-only} 
+
+  \begin{itemize}
+  \item Initial predictions: minimum label errors.
+  \item Optimized ROC curves are more regular/monotonic.
+  \item Trade-off between AUC and label error optimization.
+  \item library(aum) in R.
+  \end{itemize}
+\end{frame}
+
+\input{figure-sequential-search} 
 
 \end{document}

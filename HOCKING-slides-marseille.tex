@@ -46,7 +46,7 @@
 
 \title{
   %Algorithmes efficaces pour la détection de ruptures
-  Frontiers in optimal change-point algorithms
+  Fast and optimal change-point algorithms
 }
 
 \author{
@@ -325,9 +325,9 @@ $$
 \begin{itemize}
 \item Recursively compute $C_{1}, C_2,\dots, C_{n}$.
 \item Classic DP considers all previous change-points.
-\item At time $n$, considers all of $C_1,\dots,C_{n-1}$.
+\item At time $n$, candidates \alert {all of}  $\{1,\dots,n-1\}$.
 \item Pruned Exact Linear Time algo: Killick, \emph{et al.}, JASA (2012).
-\item At time $n$, TODO subset of candidates $C_1,\dots,C_{n-1}$.
+\item At time $n$, candidates \alert{subset of} $\{1,\dots,n-1\}$.
 \item Easy to implement, with only 1 additional line of code!
 \item Same output: one optimal change-point model.
 \item Time complexity: best $O(n)$, worst $O(n^2)$.
@@ -411,7 +411,7 @@ $$
 \item FPOP algo: Maidstone, \emph{et al.}, Stat. and Comp. (2017).
 \item Let $C_n(m)$ be the best cost with mean $m$ at $n$ data.
 \item Recursively compute functions $C_{1}(m), C_2(m),\dots, C_{n}(m)$.
-\item \textbf{Functional pruning} considers a small subset of candidates.
+\item \textbf{Functional pruning} considers smaller subset of candidates.
 \item Same output: one optimal change-point model.
 \item Same time as PELT in theory: best $O(n)$, worst $O(n^2)$.
 \item But much faster in practice! (never quadratic)
@@ -586,20 +586,29 @@ $$
 
   Pruned dynamic programming algo: Rigaill, JSFDS (2015).
   \begin{itemize}
+  \item library(fpopw) in R.
   \item Run \alert{constrained} solver to get all model sizes from 0 to 100.
   \item $O(\alert{P^*} n\log n)$ time---fast in $n$.
   \item Slow in $P^*$: we do not want model sizes 0 to 99.
-  \item library(fpopw) in R.
   \end{itemize}
-
-  Sequential search algo: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022).
+  Can we go faster?
   \begin{itemize}
-  \item Penalized solver returns best change-points for a given
-    penalty $\lambda\geq 0$ (but $\lambda$ that yields $P^*$ is
-    unknown).
+  \item FPOP/DUST are $O(n\log n)$.
+  \item But need to input penalty $\lambda\geq 0$
+  \item and $\lambda$ that yields $P^*$ is unknown.
+  \end{itemize}
+\end{frame}
+ 
+\begin{frame}
+  \frametitle{Computing one constrained model using penalized solver}
+  Sequential search algo: Hocking \emph{et al.}, Journal of Statistical Software 101(10) (2022), library(PeakSegDisk) in R.
+  
+  \includegraphics[width=0.7\textwidth]{figure-seq-search-iterations}
+  
+  \begin{itemize}
   \item Run \alert{penalized} solver for an special sequence of $\lambda$ values.
+  \item Maximizes $G(\lambda)=$ min of finite number of linear functions.
   \item $O(\alert{\log P^*} n\log n)$ time---fast in $n$ and $P^*$! (empirically)
-  \item library(PeakSegDisk) in R.
   \end{itemize}
 \end{frame}
  
@@ -625,7 +634,7 @@ $$
 
   How to compute all models with penalties $\lambda\in[\underline \lambda, \overline \lambda]$?
   \begin{itemize}
-  \item Example: want all models with $\lambda\in[0.1, \overline 10.5]$.
+  \item Example: want all models with $\lambda\in[0.1, 10.5]$.
   \item CROPS: Change-points for a Range Of PenaltieS.
   \item Haynes, \emph{et al.} Journal of Computational and Graphical Statistics, 26(1), 134-143 (2017).
   \item library(changepoint) in R.
@@ -638,7 +647,7 @@ $$
   \item Liehrmann \emph{et al.}, BMC Bioinformatics 22(323) (2021).
   \item library(CROCS) in R.
   \end{itemize}
-  Both exploit the piecewise linear solution path to obtain an efficient algorithm, linear time in the number of models!
+  Both linear time in the number of models!
   % \begin{itemize}
   % \item Avoid computing smaller 
   % \end{itemize}
@@ -661,15 +670,14 @@ $$
   \end{itemize}
   Future work:   
   \begin{itemize}
-  \item Fast pruning algorithms for piecewise loss
-    functions (L1 etc).
-  \item Proving best/worst case time complexity of sequential search
-    algorithms?
+  \item Even faster versions of DUST.
+  \item Fast pruning algorithms for piecewise loss functions (L1 etc).
+  \item Proving worst case time for sequential search?
   \end{itemize}
   Contact: toby.dylan.hocking@usherbrooke.ca
 
   \centering
-\includegraphics[height=3cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}  
+\includegraphics[height=3cm]{2025-01-photo-charles-toby-guillem-vincent.jpg}  Merci !!
 \end{frame}
 
 \begin{frame}

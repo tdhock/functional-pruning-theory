@@ -1,5 +1,18 @@
-Title: Why does functional pruning yield such fast algorithms for
-optimal changepoint detection? [[file:HOCKING-slides.pdf][Slides PDF]]
+* Fast and optimal change-point algorithms
+
+- Semi-plenary talk for JDS Marseille, June 2025.
+- [[https://raw.githubusercontent.com/tdhock/functional-pruning-theory/refs/heads/master/HOCKING-slides-marseille.pdf][Slides PDF]]
+
+Abstract:
+In this talk I present an overview of algorithmic advances in optimal change-point detection (2005-2025).
+Detecting abrupt changes is an important problem in N data gathered over time or space.
+In this setting, maximum likelihood inference amounts to minimizing a loss function (which encourages data fitting) plus a penalty on the number of changes in the model parameters (which discourages overfitting).
+Computing the optimal solution to this non-convex problem is possible using dynamic programming algorithms such as OP, PELT, FPOP, and DUST.
+We will discuss how recent algorithms have resulted in speed improvements of 1000x or more, while maintaining optimality of the detected change-points.
+
+* Why does functional pruning yield such fast algorithms for optimal changepoint detection?
+
+- [[file:HOCKING-slides.pdf][Slides PDF]]
 
 Abstract: In this talk I will present a review of recently proposed
 algorithms for optimal changepoint detection, which are empirically
@@ -23,6 +36,8 @@ average (for a special loss function). For future work it would be
 interesting to further study the average complexity of these
 algorithms, in order to provide more theoretical justification for
 these very fast empirical results.
+
+TODO: update slides with links to more recent papers that have theoretical analysis of time complexity.
 
 ** 2 May 2025
 

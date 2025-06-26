@@ -12,8 +12,9 @@ We will discuss how recent algorithms have resulted in speed improvements of 100
 
 ** Principal result figures
 
-Source code: 
-[[file:figure-dust-fpop-pelt.R]]
+- Source code from blog https://tdhock.github.io/blog/2025/PELT-vs-fpopw/
+- Source code for the two figures below: [[file:figure-dust-fpop-pelt.R]]
+- Source code for all the figures from blog: [[file:figure-dust-fpop-pelt-all.R]] (without commentary)
 
 *** Number of candidates
 

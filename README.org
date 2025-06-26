@@ -10,6 +10,23 @@ In this setting, maximum likelihood inference amounts to minimizing a loss funct
 Computing the optimal solution to this non-convex problem is possible using dynamic programming algorithms such as OP, PELT, FPOP, and DUST.
 We will discuss how recent algorithms have resulted in speed improvements of 1000x or more, while maintaining optimality of the detected change-points.
 
+** Principal result figures
+
+Source code: 
+[[file:figure-dust-fpop-pelt.R]]
+
+*** Number of candidates
+
+[[file:figure-dust-fpop-pelt-candidates.png]]
+
+[[file:figure-pred-candidates-O.png]]
+
+*** Computation time
+
+[[file:figure-dust-fpop-pelt-seconds.png]]
+
+[[file:figure-pred-seconds-O.png]]
+
 * Why does functional pruning yield such fast algorithms for optimal changepoint detection?
 
 - [[file:HOCKING-slides.pdf][Slides PDF]]
